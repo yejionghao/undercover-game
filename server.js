@@ -217,6 +217,36 @@ wss.on('connection', (ws) => {
         break;
       }
 
+      case 'reclaim_judge': {
+        // 法官断线后重新接管房间（不需要 token，凭房间号即可）
+        const room = rooms[msg.roomId];
+        if (!room) { sendTo(ws, { type: 'error', message: '房间不存在' }); return; }
+        const judgeToken = uuidv4();
+        room.judge = { id: socketId, name: msg.name || (room.judge && room.judge.name) || '法官', ws, token: judgeToken };
+        currentRoom = room;
+        isJudge = true;
+        sendTo(ws, { type: 'judge_confirmed', roomId: room.id, token: judgeToken });
+        // 推送完整游戏状态
+        sendTo(ws, getRoomState(room));
+        sendTo(ws, {
+          type: 'rejoin_judge_state',
+          roomId: room.id,
+          phase: room.phase,
+          round: room.round,
+          wordA: room.wordA,
+          wordB: room.wordB,
+          wordLength: room.wordLength,
+          playerInfoList: Object.values(room.players).map(p => ({
+            id: p.id, seq: p.seq, name: p.name, role: p.role,
+            word: p.role === 'A' ? room.wordA : p.role === 'B' ? room.wordB : null,
+            alive: p.alive
+          })),
+          descriptions: room.descriptions || [],
+          eliminated: room.eliminated || []
+        });
+        break;
+      }
+
       case 'join_room': {
         const room = getOrCreateRoom(msg.roomId);
         if (room.phase !== 'waiting') {

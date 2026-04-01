@@ -217,6 +217,12 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
     <div id="judgeSection">
       <button class="btn-primary" onclick="claimJudge()">⚖️ 我是法官，创建游戏</button>
       <div style="text-align:center;color:#888;margin:8px 0;font-size:13px;">— 或 —</div>
+      <button class="btn-secondary" onclick="showRejoinJudge()" style="width:100%;background:#2a1a3a;border-color:#8855bb">🔑 法官重新接管房间</button>
+      <div id="rejoinJudgeForm" class="hidden" style="margin-top:8px">
+        <input type="text" id="rejoinRoomInput" placeholder="输入房间号（如 MC6IF5）" maxlength="10" style="text-transform:uppercase">
+        <button class="btn-primary" onclick="rejoinAsJudge()" style="margin-top:6px;width:100%">确认重新接管</button>
+      </div>
+      <div style="text-align:center;color:#888;margin:8px 0;font-size:13px;">— 或 —</div>
     </div>
     <button class="btn-secondary" onclick="joinRoom()">🎮 加入游戏</button>
     <div id="rejoinSection" class="hidden" style="margin-top:12px;border-top:1px solid #333;padding-top:12px">
@@ -1236,6 +1242,24 @@ function updateJudgeBtn(phase) {
 }
 
 // ===== 入口操作 =====
+
+function showRejoinJudge() {
+  const f = document.getElementById('rejoinJudgeForm');
+  if (f) f.classList.toggle('hidden');
+}
+
+function rejoinAsJudge() {
+  const roomInput = document.getElementById('rejoinRoomInput').value.trim().toUpperCase();
+  const nameVal = document.getElementById('entryName').value.trim();
+  if (!roomInput) { alert('请输入房间号'); return; }
+  if (!nameVal) { alert('请输入你的名字'); return; }
+  isJudge = true;
+  myName = nameVal;
+  roomId = roomInput;
+  connectWS(() => {
+    send({ type: 'reclaim_judge', roomId, name: myName });
+  });
+}
 
 function manualRejoin() {
   const savedToken = localStorage.getItem('ug_token');
