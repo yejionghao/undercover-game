@@ -543,6 +543,19 @@ wss.on('connection', (ws) => {
         break;
       }
 
+      case 'force_vote_end': {
+        // 法官强制结束投票，用已收到的票计票
+        if (!currentRoom || !isJudge) return;
+        const room = currentRoom;
+        if (room.phase !== 'voting') return;
+        // 未投票玩家视为弃票（votes[id] = null）
+        getAlivePlayers(room).forEach(p => {
+          if (room.votes[p.id] === undefined) room.votes[p.id] = null;
+        });
+        processVotes(room);
+        break;
+      }
+
       case 'vote_started_manual':
       case 'end_discussion': {
         // 法官手动结束讨论，立即进入投票

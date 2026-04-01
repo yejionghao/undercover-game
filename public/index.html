@@ -282,6 +282,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
         <button class="btn-primary" id="btnStartDescRound" onclick="startDescRound()">▶️ 开始本轮描述</button>
         <button class="btn-success hidden" id="btnEndDescRound" onclick="endDescRound()">✅ 本轮描述结束</button>
         <button class="btn-secondary hidden" id="btnSkipDescribe" onclick="skipDescribe()" style="background:#555">⏭️ 跳过当前玩家</button>
+        <button class="btn-warning hidden" id="btnForceVoteEnd" onclick="forceVoteEnd()" style="background:#e07b00">⚡ 强制结束投票</button>
         <button class="btn-danger hidden" id="btnNextRound" onclick="nextRound()">⏭️ 开始下一轮</button>
       </div>
       <!-- 法官讨论倒计时 + 结束讨论按钮 -->
@@ -693,6 +694,7 @@ function handleMessage(msg) {
         showVoteResult(msg);
       }
       if (isJudge) {
+        showEl('btnForceVoteEnd', false);
         showJudgeVoteResult(msg);
         if (!msg.isTie) {
           // 淘汰后更新法官玩家表
@@ -1024,6 +1026,7 @@ function updateJudgeBtn(phase) {
   const btnStart = document.getElementById('btnStartDescRound');
   const btnEnd = document.getElementById('btnEndDescRound');
   const btnSkip = document.getElementById('btnSkipDescribe');
+  const btnForce = document.getElementById('btnForceVoteEnd');
   const btnNext = document.getElementById('btnNextRound');
   if (!btnStart) return;
   switch(phase) {
@@ -1032,6 +1035,7 @@ function updateJudgeBtn(phase) {
       showEl('btnStartDescRound', true);
       showEl('btnEndDescRound', false);
       showEl('btnSkipDescribe', false);
+      showEl('btnForceVoteEnd', false);
       showEl('btnNextRound', false);
       btnStart.disabled = false;
       break;
@@ -1039,14 +1043,22 @@ function updateJudgeBtn(phase) {
       showEl('btnStartDescRound', false);
       showEl('btnEndDescRound', false);
       showEl('btnSkipDescribe', true);
+      showEl('btnForceVoteEnd', false);
       showEl('btnNextRound', false);
       break;
     case 'discussing':
+      showEl('btnStartDescRound', false);
+      showEl('btnEndDescRound', false);
+      showEl('btnSkipDescribe', false);
+      showEl('btnForceVoteEnd', false);
+      showEl('btnNextRound', false);
+      break;
     case 'voting':
     case 'tie':
       showEl('btnStartDescRound', false);
       showEl('btnEndDescRound', false);
       showEl('btnSkipDescribe', false);
+      showEl('btnForceVoteEnd', true);
       showEl('btnNextRound', false);
       break;
     case 'result':
@@ -1054,6 +1066,7 @@ function updateJudgeBtn(phase) {
       showEl('btnStartDescRound', false);
       showEl('btnEndDescRound', false);
       showEl('btnSkipDescribe', false);
+      showEl('btnForceVoteEnd', false);
       showEl('btnNextRound', true);
       break;
   }
@@ -1138,6 +1151,11 @@ function skipDescribe() {
 
 function endDiscussion() {
   send({ type: 'end_discussion' });
+}
+
+function forceVoteEnd() {
+  send({ type: 'force_vote_end' });
+  showEl('btnForceVoteEnd', false);
 }
 
 let _judgeCountdownTimer = null;
