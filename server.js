@@ -299,6 +299,31 @@ wss.on('connection', (ws) => {
             round: room.round,
             descriptions: room.descriptions || []
           });
+          // 如果当前是投票阶段，补推 vote_started 让前端显示投票卡
+          if (room.phase === 'voting' && player.alive && !room.votes[socketId]) {
+            const alive = getAlivePlayers(room);
+            const voteCandidates = room.voteCandidates
+              ? alive.filter(p => room.voteCandidates.includes(p.id))
+              : alive;
+            sendTo(ws, {
+              type: 'vote_started',
+              round: room.round,
+              isTie: room.isTieVote || false,
+              players: alive.map(p => ({ id: p.id, name: p.name, seq: p.seq })),
+              voteCandidates: voteCandidates.map(p => ({ id: p.id, name: p.name, seq: p.seq }))
+            });
+          }
+          // 如果是描述阶段，补推 describing_started
+          if (room.phase === 'describing') {
+            const currentDescriberId = room.describeOrder ? room.describeOrder[room.describeIndex || 0] : null;
+            sendTo(ws, {
+              type: 'describing_started',
+              round: room.round,
+              currentDescriber: currentDescriberId,
+              currentDescriberSeq: currentDescriberId && room.players[currentDescriberId] ? room.players[currentDescriberId].seq : null,
+              currentDescriberName: currentDescriberId && room.players[currentDescriberId] ? room.players[currentDescriberId].name : null
+            });
+          }
           broadcast(room, getRoomState(room));
           return;
         }
@@ -768,12 +793,14 @@ function notifyNextDescribe(room) {
 function startVoting(room, tiePlayerIds) {
   room.phase = 'voting';
   room.votes = {};
+  room.isTieVote = !!tiePlayerIds;
   const alive = getAlivePlayers(room);
 
   // 如果是加时投票，只有平票的人
   const voteCandidates = tiePlayerIds
     ? alive.filter(p => tiePlayerIds.includes(p.id))
     : alive;
+  room.voteCandidates = voteCandidates.map(p => p.id); // 存储供重连恢复
 
   // 广播投票开始
   broadcast(room, {
