@@ -763,10 +763,12 @@ function handleMessage(msg) {
     }
 
     case 'all_described': {
-      // 只有法官收到，显示「本轮描述结束」按钮
-      showEl('btnEndDescRound', true);
-      showEl('btnStartDescRound', false);
-      showEl('btnSkipDescribe', false);
+      // 只有法官收到，且只在描述阶段才显示「本轮描述结束」按钮
+      if (gamePhase === 'describing') {
+        showEl('btnEndDescRound', true);
+        showEl('btnStartDescRound', false);
+        showEl('btnSkipDescribe', false);
+      }
       break;
     }
 
@@ -1370,6 +1372,7 @@ function startDescRound() {
 }
 
 function endDescRound() {
+  showEl('btnEndDescRound', false); // 立即隐藏，防止重复点击
   send({ type: 'end_description_round' });
   updateJudgeBtn('discussing');
 }
