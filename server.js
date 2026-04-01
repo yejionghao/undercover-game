@@ -225,7 +225,7 @@ wss.on('connection', (ws) => {
         room.judge = { id: socketId, name: msg.name || (room.judge && room.judge.name) || '法官', ws, token: judgeToken };
         currentRoom = room;
         isJudge = true;
-        sendTo(ws, { type: 'judge_confirmed', roomId: room.id, token: judgeToken });
+        sendTo(ws, { type: 'judge_confirmed', roomId: room.id, token: judgeToken, reclaim: true });
         // 推送完整游戏状态
         sendTo(ws, getRoomState(room));
         sendTo(ws, {

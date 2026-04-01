@@ -604,12 +604,14 @@ function handleMessage(msg) {
     // ===== 原有消息 =====
     case 'judge_confirmed':
       roomId = msg.roomId;
+      isJudge = true;
       if (msg.token) localStorage.setItem('ug_token', msg.token);
       localStorage.setItem('ug_roomId', roomId);
       localStorage.setItem('ug_isJudge', '1');
-      localStorage.removeItem('ug_name'); // 法官名字已知
+      localStorage.removeItem('ug_name');
       document.getElementById('shareLink').textContent = `${location.origin}?room=${roomId}`;
-      showPage('pageJudgeWaiting');
+      // reclaim_judge 时不跳等待页，等 rejoin_judge_state 恢复完整状态
+      if (!msg.reclaim) showPage('pageJudgeWaiting');
       break;
 
     case 'joined':
