@@ -181,6 +181,9 @@ wss.on('connection', (ws) => {
   let currentRoom = null;
   let isJudge = false;
 
+  // 优化1：连接建立后立即注入 socketId
+  sendTo(ws, { type: 'welcome', socketId });
+
   ws.on('message', (raw) => {
     let msg;
     try { msg = JSON.parse(raw); } catch { return; }
@@ -491,6 +494,14 @@ wss.on('connection', (ws) => {
           round: room.round,
           descriptions: room.descriptions
         });
+        // 优化2：服务端统一控制300秒倒计时，时间到自动触发投票
+        if (room._discussionTimer) clearTimeout(room._discussionTimer);
+        room._discussionTimer = setTimeout(() => {
+          if (room.phase === 'discussing') {
+            startVoting(room);
+          }
+          room._discussionTimer = null;
+        }, 300000);
         break;
       }
 

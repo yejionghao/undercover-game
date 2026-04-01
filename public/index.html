@@ -154,6 +154,13 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   67%, 100% { content: '...'; }
 }
 
+/* 描述分隔行 */
+.desc-divider {
+  text-align: center; color: #f0a500; font-size: 12px; padding: 6px 0;
+  border-top: 1px dashed #0f3460; border-bottom: 1px dashed #0f3460;
+  margin: 6px 0;
+}
+
 /* 法官玩家详情表 */
 .judge-player-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .judge-player-table th {
@@ -277,6 +284,11 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
         <button class="btn-danger hidden" id="btnNextRound" onclick="nextRound()">⏭️ 开始下一轮</button>
       </div>
     </div>
+    <!-- 优化4：法官描述记录区 -->
+    <div class="card hidden" id="judgeDescLogCard">
+      <h2>📋 描述记录</h2>
+      <ul class="desc-list" id="judgeDescLog"></ul>
+    </div>
   </div>
 
   <!-- ===== 玩家身份页 ===== -->
@@ -308,7 +320,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
       <h2>💬 讨论时间</h2>
       <div class="countdown-box">
         <div class="countdown-num" id="countdownNum">5:00</div>
-        <div class="countdown-label">讨论结束后自动进入投票</div>
+        <div class="countdown-label">讨论时间结束后进入投票</div>
       </div>
       <p class="hint">根据大家的描述，讨论谁是卧底</p>
     </div>
@@ -459,6 +471,11 @@ function connectWS(onOpen) {
 function handleMessage(msg) {
   switch(msg.type) {
 
+    // 优化1：服务端注入 socketId
+    case 'welcome':
+      mySocketId = msg.socketId;
+      break;
+
     // ===== 原有消息 =====
     case 'judge_confirmed':
       roomId = msg.roomId;
@@ -535,9 +552,10 @@ function handleMessage(msg) {
 
     case 'start_description_round': {
       gamePhase = 'describing';
-      roundDescriptions = [];
       currentDescribingId = msg.startPlayerSocketId;
-      showDescribeLog([]);
+      // 优化3：增量追加分隔行，不清空记录
+      appendDescDivider(`── 第${msg.round}轮描述 ──`, false);
+      appendDescDivider(`── 第${msg.round}轮描述 ──`, true); // judge side
       if (!isJudge) {
         showEl('describeLogCard', true);
         showEl('describeInputCard', false);
@@ -548,6 +566,7 @@ function handleMessage(msg) {
         document.getElementById('describeWaitHint').textContent = `第 ${msg.round} 轮开始，等待 #${msg.startPlayerSeq} ${msg.startPlayerName} 发言`;
       }
       if (isJudge) {
+        showEl('judgeDescLogCard', true);
         updateJudgeBtn('describing');
       }
       break;
@@ -567,7 +586,7 @@ function handleMessage(msg) {
     case 'turn_to_describe': {
       currentDescribingId = msg.socketId;
       if (!isJudge) {
-        if (msg.socketId !== getMySocketId()) {
+        if (msg.socketId !== mySocketId) {
           showEl('describeWaitCard', true);
           showEl('describeInputCard', false);
           document.getElementById('describeWaitHint').textContent =
@@ -581,9 +600,12 @@ function handleMessage(msg) {
     }
 
     case 'description_update': {
-      const record = { seq: msg.seq, name: msg.name, text: msg.text };
-      roundDescriptions.push(record);
-      showDescribeLog(roundDescriptions);
+      // 优化3：增量追加，不清空
+      appendDescItem(msg.seq, msg.name, msg.text, false);
+      // 优化4：法官端也追加
+      if (isJudge) {
+        appendDescItem(msg.seq, msg.name, msg.text, true);
+      }
       break;
     }
 
@@ -602,10 +624,8 @@ function handleMessage(msg) {
         showEl('describeWaitCard', false);
         showEl('voteCard', false);
         showEl('voteWaitCard', false);
-        startCountdown(msg.countdown || 300, () => {
-          // 倒计时结束，自动进入投票（前端发起）
-          send({ type: 'vote_started_manual' });
-        });
+        // 优化2：前端只显示倒计时UI，不触发投票；服务端统一控制
+        startCountdown(msg.countdown || 300, null);
       }
       if (isJudge) {
         updateJudgeBtn('discussing');
@@ -673,6 +693,9 @@ function handleMessage(msg) {
     }
 
     case 'tie_vote': {
+      // 优化3：插入平票加时分隔行
+      appendDescDivider('── 平票加时描述 ──', false);
+      appendDescDivider('── 平票加时描述 ──', true);
       if (!isJudge) {
         stopCountdown();
         showEl('discussionCard', false);
@@ -760,6 +783,31 @@ function showDescribeLog(records) {
       <div class="desc-text">${escHtml(r.text)}</div>
     </li>`
   ).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+// 优化3/4：增量追加单条描述记录
+// judgeTarget=false 追加到玩家端 #describeLog，judgeTarget=true 追加到法官端 #judgeDescLog
+function appendDescItem(seq, name, text, judgeTarget) {
+  const elId = judgeTarget ? 'judgeDescLog' : 'describeLog';
+  const el = document.getElementById(elId);
+  if (!el) return;
+  const li = document.createElement('li');
+  li.className = 'desc-item';
+  li.innerHTML = `<div class="desc-header">#${seq} ${escHtml(name)}</div><div class="desc-text">${escHtml(text)}</div>`;
+  el.appendChild(li);
+  el.scrollTop = el.scrollHeight;
+}
+
+// 优化3/4：插入分隔行
+function appendDescDivider(label, judgeTarget) {
+  const elId = judgeTarget ? 'judgeDescLog' : 'describeLog';
+  const el = document.getElementById(elId);
+  if (!el) return;
+  const div = document.createElement('li');
+  div.style.listStyle = 'none';
+  div.innerHTML = `<div class="desc-divider">${escHtml(label)}</div>`;
+  el.appendChild(div);
   el.scrollTop = el.scrollHeight;
 }
 
