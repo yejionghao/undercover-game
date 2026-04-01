@@ -287,6 +287,20 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
         <button class="btn-warning hidden" id="btnForceVoteEnd" onclick="forceVoteEnd()" style="background:#e07b00">⚡ 强制结束投票</button>
         <button class="btn-danger hidden" id="btnNextRound" onclick="nextRound()">⏭️ 开始下一轮</button>
       </div>
+      <!-- 法官投票进度面板 -->
+      <div class="hidden" id="judgeVoteProgressPanel" style="margin-top:16px;padding:12px;background:#1a2a3a;border-radius:8px">
+        <div style="font-size:13px;font-weight:bold;color:#f0a500;margin-bottom:8px">🗳️ 投票进度 <span id="voteProgressCount" style="color:#888;font-weight:normal"></span></div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <div style="flex:1;min-width:120px">
+            <div style="font-size:11px;color:#00c896;margin-bottom:4px">✅ 已投票</div>
+            <ul id="voteProgressVoted" style="list-style:none;padding:0;margin:0;font-size:13px"></ul>
+          </div>
+          <div style="flex:1;min-width:120px">
+            <div style="font-size:11px;color:#e94560;margin-bottom:4px">⏳ 未投票</div>
+            <ul id="voteProgressNotVoted" style="list-style:none;padding:0;margin:0;font-size:13px"></ul>
+          </div>
+        </div>
+      </div>
       <!-- 法官讨论倒计时 + 结束讨论按钮 -->
       <div class="hidden" id="judgeDiscussPanel" style="margin-top:16px;padding:12px;background:#1a2a3a;border-radius:8px;text-align:center">
         <div style="font-size:13px;color:#888;margin-bottom:6px">💬 讨论倒计时</div>
@@ -678,7 +692,27 @@ function handleMessage(msg) {
         stopJudgeCountdown();
         showEl('judgeDiscussPanel', false);
         updateJudgeBtn('voting');
+        // 显示投票进度面板，初始化未投票列表
+        showEl('judgeVoteProgressPanel', true);
+        document.getElementById('voteProgressCount').textContent = `0 / ${msg.players ? msg.players.length : '?'}`;
+        document.getElementById('voteProgressVoted').innerHTML = '';
+        document.getElementById('voteProgressNotVoted').innerHTML =
+          (msg.players || []).map(p =>
+            `<li id="vpnv-${p.id}" style="color:#e0e0e0;padding:2px 0">#${p.seq} ${escHtml(p.name)}</li>`
+          ).join('');
       }
+      break;
+    }
+
+    case 'vote_progress': {
+      if (!isJudge) break;
+      document.getElementById('voteProgressCount').textContent = `${msg.voted.length} / ${msg.total}`;
+      document.getElementById('voteProgressVoted').innerHTML = msg.voted.map(v =>
+        `<li style="color:#00c896;padding:2px 0">#${v.seq} ${escHtml(v.name)} → ${v.targetId ? `#${v.targetSeq} ${escHtml(v.targetName)}` : '弃票'}</li>`
+      ).join('');
+      document.getElementById('voteProgressNotVoted').innerHTML = msg.notVoted.map(v =>
+        `<li style="color:#e94560;padding:2px 0">#${v.seq} ${escHtml(v.name)}</li>`
+      ).join('');
       break;
     }
 
@@ -697,6 +731,7 @@ function handleMessage(msg) {
       }
       if (isJudge) {
         showEl('btnForceVoteEnd', false);
+        showEl('judgeVoteProgressPanel', false);
         showJudgeVoteResult(msg);
         if (!msg.isTie) {
           // 淘汰后更新法官玩家表

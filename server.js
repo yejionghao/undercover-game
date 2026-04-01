@@ -592,8 +592,25 @@ wss.on('connection', (ws) => {
 
         sendTo(ws, { type: 'vote_received' });
 
-        // 检查是否所有存活玩家都投票了
+        // 推送投票进度给法官
         const alive = getAlivePlayers(room);
+        if (room.judge) {
+          sendTo(room.judge.ws, {
+            type: 'vote_progress',
+            voted: alive.filter(p => room.votes[p.id] !== undefined).map(p => ({
+              id: p.id, seq: p.seq, name: p.name,
+              targetId: room.votes[p.id],
+              targetName: room.votes[p.id] && room.players[room.votes[p.id]] ? room.players[room.votes[p.id]].name : null,
+              targetSeq: room.votes[p.id] && room.players[room.votes[p.id]] ? room.players[room.votes[p.id]].seq : null
+            })),
+            notVoted: alive.filter(p => room.votes[p.id] === undefined).map(p => ({
+              id: p.id, seq: p.seq, name: p.name
+            })),
+            total: alive.length
+          });
+        }
+
+        // 检查是否所有存活玩家都投票了
         const allVoted = alive.every(p => room.votes[p.id] !== undefined);
         if (allVoted) {
           processVotes(room);
