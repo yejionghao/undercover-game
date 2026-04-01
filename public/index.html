@@ -391,15 +391,22 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   <div id="pagePlayerSettlement" class="hidden">
     <div class="card">
       <h2>🗳️ 提交猜测</h2>
-      <p class="hint">填写你认为的两组平民及其词语</p>
-      <label style="font-size:13px;color:#aaa;display:block;margin-bottom:4px;">第一组平民的名字（逗号分隔）</label>
-      <input type="text" id="groupANames" placeholder="例：张三, 李四">
-      <label style="font-size:13px;color:#aaa;display:block;margin-bottom:4px;">第一组平民的词语</label>
-      <input type="text" id="groupAWord" placeholder="例：西瓜">
-      <label style="font-size:13px;color:#aaa;display:block;margin-bottom:4px;">第二组平民的名字（逗号分隔）</label>
-      <input type="text" id="groupBNames" placeholder="例：王五, 赵六">
-      <label style="font-size:13px;color:#aaa;display:block;margin-bottom:4px;">第二组平民的词语</label>
-      <input type="text" id="groupBWord" placeholder="例：冬瓜">
+      <p class="hint">点选你认为的两组平民，再填写对应词语</p>
+
+      <!-- 第一组 -->
+      <div style="margin-bottom:14px">
+        <div style="font-size:13px;color:#74b9ff;font-weight:bold;margin-bottom:6px;">🔵 第一组平民（点击选择）</div>
+        <div id="groupAPickerList" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px"></div>
+        <input type="text" id="groupAWord" placeholder="第一组平民的词语（手动填写）" style="margin-top:4px">
+      </div>
+
+      <!-- 第二组 -->
+      <div style="margin-bottom:16px">
+        <div style="font-size:13px;color:#55efc4;font-weight:bold;margin-bottom:6px;">🟢 第二组平民（点击选择）</div>
+        <div id="groupBPickerList" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px"></div>
+        <input type="text" id="groupBWord" placeholder="第二组平民的词语（手动填写）" style="margin-top:4px">
+      </div>
+
       <button class="btn-primary" onclick="submitResult()">📨 提交猜测</button>
     </div>
   </div>
@@ -671,7 +678,11 @@ function handleMessage(msg) {
       break;
 
     case 'settlement_started':
-      if (!isJudge) showPage('pagePlayerSettlement');
+      if (!isJudge) {
+        // 渲染分组选择器
+        buildGroupPicker(msg.alivePlayers || []);
+        showPage('pagePlayerSettlement');
+      }
       break;
 
     case 'submit_ok':
@@ -1407,13 +1418,65 @@ function startSettlement() {
   showPage('pageJudgeSettlement');
 }
 
+// 分组选择器状态 {id -> 'A'|'B'|null}
+window._groupSelection = {};
+
+function buildGroupPicker(players) {
+  window._groupPlayers = players;
+  window._groupSelection = {};
+  players.forEach(p => { window._groupSelection[p.id] = null; });
+
+  ['A', 'B'].forEach(group => {
+    const list = document.getElementById(`group${group}PickerList`);
+    if (!list) return;
+    list.innerHTML = players.map(p => `
+      <div class="vote-option" id="gpick_${group}_${p.id}" onclick="toggleGroupPick('${group}','${p.id}')" style="padding:8px 12px;margin-bottom:0;min-width:80px">
+        <span class="seq-badge" style="width:22px;height:22px;font-size:12px">${p.seq||'?'}</span>
+        <span class="player-name" style="font-size:14px">${escHtml(p.name)}</span>
+      </div>`).join('');
+  });
+}
+
+function toggleGroupPick(group, playerId) {
+  const prev = window._groupSelection[playerId];
+  // 如果已选此组，取消；否则切换到此组
+  window._groupSelection[playerId] = (prev === group) ? null : group;
+  // 刷新所有按钮状态
+  (window._groupPlayers || []).forEach(p => {
+    const sel = window._groupSelection[p.id];
+    ['A','B'].forEach(g => {
+      const el = document.getElementById(`gpick_${g}_${p.id}`);
+      if (!el) return;
+      if (sel === g) {
+        el.classList.add('selected');
+        el.style.borderColor = g === 'A' ? '#74b9ff' : '#55efc4';
+        el.style.background = g === 'A' ? '#0a1a3a' : '#0a2a1a';
+      } else {
+        el.classList.remove('selected');
+        el.style.borderColor = '';
+        el.style.background = '';
+      }
+    });
+  });
+}
+
 function submitResult() {
-  const gANames = document.getElementById('groupANames').value.trim();
   const gAWord = document.getElementById('groupAWord').value.trim();
-  const gBNames = document.getElementById('groupBNames').value.trim();
   const gBWord = document.getElementById('groupBWord').value.trim();
-  if (!gANames || !gAWord || !gBNames || !gBWord) { alert('请填写完整信息'); return; }
-  send({ type: 'submit_result', groupA_names: gANames, groupA_word: gAWord, groupB_names: gBNames, groupB_word: gBWord });
+  if (!gAWord || !gBWord) { alert('请填写两组的词语'); return; }
+
+  const groupA = (window._groupPlayers || []).filter(p => window._groupSelection[p.id] === 'A').map(p => p.name);
+  const groupB = (window._groupPlayers || []).filter(p => window._groupSelection[p.id] === 'B').map(p => p.name);
+
+  if (groupA.length === 0 || groupB.length === 0) { alert('请分别为第一组和第二组选择玩家'); return; }
+
+  send({
+    type: 'submit_result',
+    groupA_names: groupA.join(', '),
+    groupA_word: gAWord,
+    groupB_names: groupB.join(', '),
+    groupB_word: gBWord
+  });
 }
 
 function announceResult() {

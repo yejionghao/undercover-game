@@ -998,12 +998,17 @@ function handleGameOver(room, winner) {
         id: p.id, name: p.name, seq: p.seq, role: p.role, alive: p.alive
       }))
     });
-    broadcast(room, { type: 'settlement_started' });
+    // 广播给所有玩家（含存活玩家列表，用于选择分组）
+    const allAlive = getAlivePlayers(room);
+    broadcast(room, {
+      type: 'settlement_started',
+      alivePlayers: allAlive.map(p => ({ id: p.id, name: p.name, seq: p.seq }))
+    });
     // 通知法官进入结算
     if (room.judge) {
       sendTo(room.judge.ws, {
         type: 'settlement_started',
-        alivePlayers: alive.map(p => ({ id: p.id, name: p.name, seq: p.seq, role: p.role }))
+        alivePlayers: allAlive.map(p => ({ id: p.id, name: p.name, seq: p.seq, role: p.role }))
       });
     }
   }
