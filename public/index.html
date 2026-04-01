@@ -297,6 +297,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
         <button class="btn-secondary hidden" id="btnSkipDescribe" onclick="skipDescribe()" style="background:#555">⏭️ 跳过当前玩家</button>
         <button class="btn-warning hidden" id="btnForceVoteEnd" onclick="forceVoteEnd()" style="background:#e07b00">⚡ 强制结束投票</button>
         <button class="btn-danger hidden" id="btnNextRound" onclick="nextRound()">⏭️ 开始下一轮</button>
+        <button class="btn-danger" id="btnForceSettle" onclick="forceSettle()" style="background:#8b0000;margin-top:8px;width:100%">🏁 直接进入结算</button>
       </div>
       <!-- 法官投票进度面板 -->
       <div class="hidden" id="judgeVoteProgressPanel" style="margin-top:16px;padding:12px;background:#1a2a3a;border-radius:8px">
@@ -683,9 +684,12 @@ function handleMessage(msg) {
 
     case 'settlement_started':
       if (!isJudge) {
-        // 渲染分组选择器
+        // 渲染分组选择器（含已淘汰玩家）
         buildGroupPicker(msg.alivePlayers || []);
         showPage('pagePlayerSettlement');
+      } else {
+        // 法官也跳结算页（force_settle 触发时服务端会推这条）
+        showPage('pageJudgeSettlement');
       }
       break;
 
@@ -1428,6 +1432,12 @@ function nextRound() {
 function startSettlement() {
   if (!confirm('确定进入结算阶段？')) return;
   send({ type: 'start_settlement' });
+  showPage('pageJudgeSettlement');
+}
+
+function forceSettle() {
+  if (!confirm('跳过淘汰流程，直接进入结算？\n所有玩家（含已淘汰）都将参与结算。')) return;
+  send({ type: 'force_settle' });
   showPage('pageJudgeSettlement');
 }
 

@@ -491,6 +491,36 @@ wss.on('connection', (ws) => {
         break;
       }
 
+      // 法官强制跳转结算（所有玩家，含已淘汰）
+      case 'force_settle': {
+        if (!currentRoom || !isJudge) return;
+        const room = currentRoom;
+        // 清除讨论倒计时
+        if (room._discussTimer) { clearTimeout(room._discussTimer); delete room._discussTimer; }
+        room.phase = 'settlement';
+        room.submissions = {};
+        // 所有玩家（含已淘汰）都参与结算
+        const allPlayers = Object.values(room.players).map(p => ({
+          id: p.id, name: p.name, seq: p.seq, alive: p.alive
+        }));
+        // 广播给玩家
+        broadcast(room, {
+          type: 'settlement_started',
+          alivePlayers: allPlayers  // 字段名保持兼容，但含全员
+        });
+        // 通知法官
+        if (room.judge) {
+          sendTo(room.judge.ws, {
+            type: 'settlement_started',
+            alivePlayers: allPlayers.map(p => ({
+              ...p,
+              role: room.players[p.id] ? room.players[p.id].role : null
+            }))
+          });
+        }
+        break;
+      }
+
       case 'submit_result': {
         if (!currentRoom) return;
         const room = currentRoom;
