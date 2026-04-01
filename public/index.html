@@ -111,6 +111,8 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 }
 .desc-item .desc-header { font-size: 12px; color: #888; margin-bottom: 4px; }
 .desc-item .desc-text { font-size: 15px; color: #e0e0e0; }
+.desc-item .desc-texts { font-size: 15px; color: #e0e0e0; display: inline; }
+.desc-item .desc-text-inline { font-size: 15px; color: #e0e0e0; }
 .desc-item.current-turn { border-left-color: #00c896; }
 
 /* 倒计时 */
@@ -718,9 +720,8 @@ function handleMessage(msg) {
       showEl('voteCard', false);
       showEl('voteWaitCard', false);
       showEl('eliminatedCard', true);
-      let roleLabel = msg.role === 'A' ? '平民A组' : msg.role === 'B' ? '平民B组' : '卧底';
       document.getElementById('eliminatedInfo').textContent =
-        `你的身份是 ${roleLabel}，词语是「${msg.word}」`;
+        `你已被淘汰，等待游戏结束后揭晓身份`;
       break;
     }
 
@@ -767,7 +768,7 @@ function handleMessage(msg) {
     }
 
     case 'game_ended_civilian_wins': {
-      // 收到这条后 settlement_started 也会来
+      showGameOver('civilian', msg);
       break;
     }
 
@@ -824,10 +825,24 @@ function appendDescItem(seq, name, text, judgeTarget) {
   const elId = judgeTarget ? 'judgeDescLog' : 'describeLog';
   const el = document.getElementById(elId);
   if (!el) return;
-  const li = document.createElement('li');
-  li.className = 'desc-item';
-  li.innerHTML = `<div class="desc-header">#${seq} ${escHtml(name)}</div><div class="desc-text">${escHtml(text)}</div>`;
-  el.appendChild(li);
+  // 找已有的该玩家行
+  const rowId = `${elId}-row-${seq}`;
+  let row = document.getElementById(rowId);
+  if (!row) {
+    // 第一次出现，创建新行
+    row = document.createElement('li');
+    row.id = rowId;
+    row.className = 'desc-item';
+    row.innerHTML = `<div class="desc-header">#${seq} ${escHtml(name)}</div><div class="desc-texts"></div>`;
+    el.appendChild(row);
+  }
+  // 追加本轮发言（用轮次序号标注）
+  const textsEl = row.querySelector('.desc-texts');
+  const roundNum = textsEl.children.length + 1;
+  const span = document.createElement('span');
+  span.className = 'desc-text-inline';
+  span.textContent = (roundNum > 1 ? ` / ${roundNum}. ` : '') + text;
+  textsEl.appendChild(span);
   el.scrollTop = el.scrollHeight;
 }
 
@@ -922,10 +937,8 @@ function showVoteResult(msg) {
 
   let html = '<h2>📊 投票结果</h2>';
   if (msg.eliminatedId) {
-    const roleLabel = msg.eliminatedRole === 'undercover' ? '卧底' :
-                      msg.eliminatedRole === 'A' ? '平民A' : '平民B';
     html += `<p style="margin-bottom:12px;color:#ff7675;font-weight:bold">
-      💀 #${msg.eliminatedSeq} ${escHtml(msg.eliminatedName)}（${roleLabel}）被淘汰
+      💀 #${msg.eliminatedSeq} ${escHtml(msg.eliminatedName)} 被淘汰
     </p>`;
   }
   html += '<div>';
@@ -951,11 +964,7 @@ function showVoteResult(msg) {
 }
 
 function showGameOver(winner, msg) {
-  if (isJudge) {
-    showPage('pageEnded');
-  } else {
-    showPage('pageEnded');
-  }
+  showPage('pageEnded');
   const banner = document.getElementById('gameOverBanner');
   if (winner === 'undercover') {
     banner.innerHTML = `<div class="game-over-banner undercover-wins">
@@ -971,6 +980,22 @@ function showGameOver(winner, msg) {
   if (msg.wordA) document.getElementById('endWordA').textContent = msg.wordA;
   if (msg.wordB) document.getElementById('endWordB').textContent = msg.wordB;
   document.getElementById('endWordCard').style.display = '';
+
+  // 揭示所有玩家身份
+  if (msg.playerDetails && msg.playerDetails.length) {
+    const subsCard = document.getElementById('endSubmissionsCard');
+    subsCard.style.display = '';
+    document.getElementById('endSubmissions').innerHTML =
+      `<div style="font-weight:bold;margin-bottom:8px;">👥 全员身份揭晓</div>` +
+      msg.playerDetails.map(p => {
+        const roleLabel = p.role === 'undercover' ? '🕵️ 卧底' :
+                          p.role === 'A' ? '🔵 平民A' : '🟢 平民B';
+        const statusLabel = p.alive ? '' : ' <span style="color:#e94560">（已淘汰）</span>';
+        return `<div class="submission-item">
+          <div class="s-name">#${p.seq} ${escHtml(p.name)} &nbsp; ${roleLabel}${statusLabel}</div>
+        </div>`;
+      }).join('');
+  }
 }
 
 // ===== 法官相关 =====

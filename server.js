@@ -824,7 +824,12 @@ function handleGameOver(room, winner) {
     room.submissions = {};
     broadcast(room, {
       type: 'game_ended_civilian_wins',
-      message: '所有卧底已淘汰！进入结算环节'
+      message: '所有卧底已淘汰！进入结算环节',
+      wordA: room.wordA,
+      wordB: room.wordB,
+      playerDetails: allPlayers.map(p => ({
+        id: p.id, name: p.name, seq: p.seq, role: p.role, alive: p.alive
+      }))
     });
     broadcast(room, { type: 'settlement_started' });
     // 通知法官进入结算
