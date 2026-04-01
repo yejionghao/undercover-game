@@ -41,11 +41,15 @@ const WORD_PAIRS = {
 
 // 分组规则
 function getGroupSizes(total) {
+  // [卧底数, 平民数, 白板数]，支持 6-12 人
   const rules = {
+    6:  [1, 4, 1],
     7:  [2, 3, 2],
     8:  [2, 3, 3],
     9:  [3, 3, 3],
-    10: [3, 4, 3]
+    10: [3, 4, 3],
+    11: [3, 5, 3],
+    12: [3, 6, 3]
   };
   return rules[total] || null;
 }
@@ -319,7 +323,7 @@ wss.on('connection', (ws) => {
         const total = players.length;
         const sizes = getGroupSizes(total);
         if (!sizes) {
-          sendTo(ws, { type: 'error', message: `不支持 ${total} 人游戏，请确保7-10人` });
+          sendTo(ws, { type: 'error', message: `不支持 ${total} 人游戏，请确保6-12人` });
           return;
         }
         const allReady = players.every(p => p.ready);
