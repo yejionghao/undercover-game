@@ -204,10 +204,11 @@ wss.on('connection', (ws) => {
           sendTo(ws, { type: 'error', message: '该房间已有法官' });
           return;
         }
-        room.judge = { id: socketId, name: msg.name, ws };
+        const judgeToken = uuidv4();
+        room.judge = { id: socketId, name: msg.name, ws, token: judgeToken };
         currentRoom = room;
         isJudge = true;
-        sendTo(ws, { type: 'judge_confirmed', roomId: room.id });
+        sendTo(ws, { type: 'judge_confirmed', roomId: room.id, token: judgeToken });
         broadcast(room, getRoomState(room));
         break;
       }
@@ -218,10 +219,87 @@ wss.on('connection', (ws) => {
           sendTo(ws, { type: 'error', message: '游戏已开始，无法加入' });
           return;
         }
-        room.players[socketId] = { id: socketId, name: msg.name, ready: false, ws, seq: 0, alive: true };
+        const playerToken = uuidv4();
+        room.players[socketId] = { id: socketId, name: msg.name, ready: false, ws, seq: 0, alive: true, token: playerToken };
         currentRoom = room;
-        sendTo(ws, { type: 'joined', roomId: room.id });
+        sendTo(ws, { type: 'joined', roomId: room.id, token: playerToken });
         broadcast(room, getRoomState(room));
+        break;
+      }
+
+      case 'rejoin': {
+        // 断线重连：凭 token + roomId 恢复身份
+        const room = rooms[msg.roomId];
+        if (!room) { sendTo(ws, { type: 'error', message: '房间不存在或已结束' }); return; }
+
+        // 尝试匹配法官
+        if (room.judge && room.judge.token === msg.token) {
+          room.judge.ws = ws;
+          room.judge.id = socketId;
+          currentRoom = room;
+          isJudge = true;
+          sendTo(ws, { type: 'rejoin_ok', role: 'judge', roomId: room.id, token: msg.token });
+          // 推送当前游戏状态给法官
+          sendTo(ws, getRoomState(room));
+          sendTo(ws, {
+            type: 'rejoin_judge_state',
+            phase: room.phase,
+            round: room.round,
+            wordA: room.wordA,
+            wordB: room.wordB,
+            wordLength: room.wordLength,
+            playerInfoList: Object.values(room.players).map(p => ({
+              id: p.id, seq: p.seq, name: p.name, role: p.role,
+              word: p.role === 'A' ? room.wordA : p.role === 'B' ? room.wordB : null,
+              alive: p.alive
+            })),
+            descriptions: room.descriptions || [],
+            eliminated: room.eliminated || []
+          });
+          return;
+        }
+
+        // 尝试匹配玩家（按 token 查找）
+        const player = Object.values(room.players).find(p => p.token === msg.token);
+        if (player) {
+          const oldId = player.id;
+          // 更新 WS 和 socketId
+          delete room.players[oldId];
+          player.id = socketId;
+          player.ws = ws;
+          player.disconnected = false;
+          room.players[socketId] = player;
+          // 更新 playerSeqList
+          const idx = room.playerSeqList.indexOf(oldId);
+          if (idx !== -1) room.playerSeqList[idx] = socketId;
+          // 更新 describeOrder
+          const di = (room.describeOrder || []).indexOf(oldId);
+          if (di !== -1) room.describeOrder[di] = socketId;
+          // 更新 votes
+          if (room.votes && room.votes[oldId] !== undefined) {
+            room.votes[socketId] = room.votes[oldId];
+            delete room.votes[oldId];
+          }
+          currentRoom = room;
+          sendTo(ws, {
+            type: 'rejoin_ok',
+            role: 'player',
+            roomId: room.id,
+            token: msg.token,
+            seq: player.seq,
+            name: player.name,
+            yourRole: player.role,
+            word: player.role === 'A' ? room.wordA : player.role === 'B' ? room.wordB : null,
+            alive: player.alive,
+            phase: room.phase,
+            round: room.round,
+            descriptions: room.descriptions || []
+          });
+          broadcast(room, getRoomState(room));
+          return;
+        }
+
+        sendTo(ws, { type: 'error', message: '重连失败，token 无效或已过期' });
         break;
       }
 

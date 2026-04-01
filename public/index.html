@@ -473,6 +473,20 @@ function showPage(id) {
   document.getElementById(id).classList.remove('hidden');
 }
 
+function showAlert(text, durationMs = 3000) {
+  let el = document.getElementById('_ugToast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = '_ugToast';
+    el.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#1e3a2a;color:#00c896;border:1px solid #00c896;border-radius:8px;padding:10px 20px;font-size:14px;z-index:9999;pointer-events:none;transition:opacity 0.3s';
+    document.body.appendChild(el);
+  }
+  el.textContent = text;
+  el.style.opacity = '1';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.style.opacity = '0'; }, durationMs);
+}
+
 function send(msg) {
   if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(msg));
 }
@@ -500,15 +514,84 @@ function handleMessage(msg) {
       mySocketId = msg.socketId;
       break;
 
+    case 'rejoin_ok':
+      mySocketId = null; // 将由下一条 welcome 更新
+      if (msg.token) localStorage.setItem('ug_token', msg.token);
+      if (msg.role === 'judge') {
+        isJudge = true;
+        roomId = msg.roomId;
+        // 等 rejoin_judge_state 来恢复界面
+      } else {
+        isJudge = false;
+        roomId = msg.roomId;
+        myName = msg.name;
+        mySeq = msg.seq;
+        myRole = msg.yourRole;
+        localStorage.setItem('ug_name', myName);
+        // 根据 phase 跳到对应界面
+        if (!msg.alive) {
+          showPage('pagePlayerWaitResult');
+          document.getElementById('waitResultText').textContent = '你已被淘汰，等待游戏结束揭晓身份...';
+        } else if (msg.phase === 'waiting' || msg.phase === 'started') {
+          showPage('pagePlayerWaiting');
+        } else if (msg.phase === 'describing') {
+          showPage('pagePlayerIdentity');
+          showEl('describeInputCard', true);
+          showEl('describeLog', true);
+          if (msg.descriptions) {
+            msg.descriptions.forEach(d => appendDescItem(d.seq, d.name, d.text));
+          }
+        } else if (msg.phase === 'voting') {
+          showPage('pagePlayerWaitResult');
+          document.getElementById('waitResultText').textContent = '投票进行中，等待结果...';
+        } else if (msg.phase === 'discussing') {
+          showPage('pagePlayerIdentity');
+          showEl('discussionCard', true);
+        } else {
+          showPage('pagePlayerIdentity');
+        }
+        showAlert(`✅ 已重连恢复游戏（#${msg.seq} ${msg.name}）`);
+      }
+      break;
+
+    case 'rejoin_judge_state':
+      // 法官重连后恢复完整状态
+      judgePlayerDetails = msg.playerInfoList || [];
+      roomId = msg.roomId || roomId;
+      document.getElementById('shareLink').textContent = `${location.origin}?room=${roomId}`;
+      renderJudgePlayerDetails();
+      showPage('pageJudgeWord');
+      updateJudgeBtn(msg.phase);
+      if (msg.descriptions) {
+        msg.descriptions.forEach(d => {
+          if (document.getElementById('judgeDescLog')) {
+            const li = document.createElement('li');
+            li.textContent = `#${d.seq} ${d.name}：${d.text}`;
+            document.getElementById('judgeDescLog').appendChild(li);
+          }
+        });
+      }
+      showEl('judgeDescLogCard', true);
+      showAlert('✅ 法官已重连恢复');
+      break;
+
     // ===== 原有消息 =====
     case 'judge_confirmed':
       roomId = msg.roomId;
+      if (msg.token) localStorage.setItem('ug_token', msg.token);
+      localStorage.setItem('ug_roomId', roomId);
+      localStorage.setItem('ug_isJudge', '1');
+      localStorage.removeItem('ug_name'); // 法官名字已知
       document.getElementById('shareLink').textContent = `${location.origin}?room=${roomId}`;
       showPage('pageJudgeWaiting');
       break;
 
     case 'joined':
       roomId = msg.roomId;
+      if (msg.token) localStorage.setItem('ug_token', msg.token);
+      localStorage.setItem('ug_roomId', roomId);
+      localStorage.setItem('ug_isJudge', '0');
+      localStorage.setItem('ug_name', myName);
       showPage('pagePlayerWaiting');
       break;
 
@@ -1001,6 +1084,11 @@ function showVoteResult(msg) {
 }
 
 function showGameOver(winner, msg) {
+  // 游戏结束，清除重连 token
+  localStorage.removeItem('ug_token');
+  localStorage.removeItem('ug_roomId');
+  localStorage.removeItem('ug_isJudge');
+  localStorage.removeItem('ug_name');
   showPage('pageEnded');
   const banner = document.getElementById('gameOverBanner');
   if (winner === 'undercover') {
@@ -1436,6 +1524,34 @@ window.onload = () => {
   const urlRoom = getUrlParam('room');
   if (urlRoom) {
     document.getElementById('judgeSection').classList.add('hidden');
+  }
+
+  // 自动重连：检测 localStorage 中的 token
+  const savedToken = localStorage.getItem('ug_token');
+  const savedRoomId = localStorage.getItem('ug_roomId');
+  const savedIsJudge = localStorage.getItem('ug_isJudge');
+  const savedName = localStorage.getItem('ug_name');
+
+  // 只在有 token、房间号与 URL 匹配（或为法官）时尝试重连
+  const targetRoom = urlRoom || savedRoomId;
+  if (savedToken && savedRoomId && targetRoom === savedRoomId) {
+    isJudge = savedIsJudge === '1';
+    myName = savedName || '';
+    roomId = savedRoomId;
+    connectWS(() => {
+      send({ type: 'rejoin', roomId: savedRoomId, token: savedToken });
+    });
+    // 3秒内没收到 rejoin_ok 则显示入口页（可能 token 过期或房间没了）
+    setTimeout(() => {
+      const currentPage = document.querySelector('.page:not(.hidden)');
+      if (!currentPage || currentPage.id === 'pageEntry') {
+        // 重连失败，清除 token，留在入口页
+        localStorage.removeItem('ug_token');
+        localStorage.removeItem('ug_roomId');
+        localStorage.removeItem('ug_isJudge');
+        localStorage.removeItem('ug_name');
+      }
+    }, 3000);
   }
 };
 </script>
