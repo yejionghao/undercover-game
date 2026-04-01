@@ -259,7 +259,7 @@ wss.on('connection', (ws) => {
         const undercoverSubs = subs.filter(s => s.role === 'undercover');
         const civilianSubs = subs.filter(s => s.role !== 'undercover');
 
-        const allUndercoverCorrect = undercoverSubs.length > 0 && undercoverSubs.every(correct);
+        const allUndercoverCorrect = undercoverSubs.length > 0 && undercoverSubs.some(correct);
         const allCivilianCorrect = civilianSubs.length > 0 && civilianSubs.every(correct);
 
         let winner;
