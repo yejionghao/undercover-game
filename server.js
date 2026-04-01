@@ -343,16 +343,28 @@ wss.on('connection', (ws) => {
               voteCandidates: voteCandidates.map(p => ({ id: p.id, name: p.name, seq: p.seq }))
             });
           }
-          // 如果是描述阶段，补推 describing_started
+          // 如果是描述阶段，补推 start_description_round + 若轮到自己补推 your_turn_describe
           if (room.phase === 'describing') {
             const currentDescriberId = room.describeOrder ? room.describeOrder[room.describeIndex || 0] : null;
+            const startPlayer = currentDescriberId && room.players[currentDescriberId];
             sendTo(ws, {
-              type: 'describing_started',
+              type: 'start_description_round',
               round: room.round,
-              currentDescriber: currentDescriberId,
-              currentDescriberSeq: currentDescriberId && room.players[currentDescriberId] ? room.players[currentDescriberId].seq : null,
-              currentDescriberName: currentDescriberId && room.players[currentDescriberId] ? room.players[currentDescriberId].name : null
+              startPlayerSocketId: currentDescriberId,
+              startPlayerSeq: startPlayer ? startPlayer.seq : null,
+              startPlayerName: startPlayer ? startPlayer.name : null
             });
+            // 若轮到重连玩家描述，补推 your_turn_describe
+            if (currentDescriberId === socketId && player.alive) {
+              const alive = getAlivePlayers(room);
+              sendTo(ws, {
+                type: 'your_turn_describe',
+                round: room.round,
+                descIndex: room.describeIndex || 0,
+                descTotal: alive.length,
+                socketId: socketId
+              });
+            }
           }
           broadcast(room, getRoomState(room));
           return;

@@ -559,9 +559,11 @@ function handleMessage(msg) {
         } else if (msg.phase === 'waiting' || msg.phase === 'started') {
           showPage('pagePlayerWaiting');
         } else if (msg.phase === 'describing') {
+          gamePhase = 'describing';
           showPage('pagePlayerIdentity');
-          showEl('describeInputCard', true);
-          showEl('describeLog', true);
+          showEl('describeWaitCard', true);   // 先显示等待，your_turn_describe来了再切
+          showEl('describeInputCard', false);
+          showEl('describeLogCard', true);
           if (msg.descriptions) {
             msg.descriptions.forEach(d => appendDescItem(d.seq, d.name, d.text));
           }
