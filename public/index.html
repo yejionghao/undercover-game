@@ -514,9 +514,24 @@ function handleMessage(msg) {
       });
       break;
 
+    case 'player_info_list':
+      // 法官收到含词语的玩家详情（distribute_words 后推送）
+      if (isJudge) {
+        judgePlayerDetails = msg.players.map(p => ({ ...p, alive: true }));
+        renderJudgePlayerDetails();
+      }
+      break;
+
     case 'word_pair_result':
       document.getElementById('manualWordA').value = msg.wordA;
       document.getElementById('manualWordB').value = msg.wordB;
+      // 自动模式：收到词对后立即下发
+      if (_pendingWordLength) {
+        const len = _pendingWordLength;
+        _pendingWordLength = null;
+        window._wordA = msg.wordA; window._wordB = msg.wordB; window._wordLen = len;
+        send({ type: 'distribute_words', wordA: msg.wordA, wordB: msg.wordB, wordLength: len });
+      }
       break;
 
     case 'your_word':
@@ -524,9 +539,11 @@ function handleMessage(msg) {
       break;
 
     case 'words_distributed':
+      window._wordA = msg.wordA; window._wordB = msg.wordB; window._wordLen = msg.wordLength;
       document.getElementById('judgeWordInfo').classList.remove('hidden');
       document.getElementById('infoWordA').textContent = `A：${msg.wordA}`;
       document.getElementById('infoWordB').textContent = `B：${msg.wordB}`;
+      renderJudgePlayerDetails();
       break;
 
     case 'settlement_started':
@@ -1067,31 +1084,24 @@ function selectMode(mode) {
   document.getElementById('manualInput').classList.toggle('hidden', mode === 'auto');
 }
 
+// 待下发的词语字数（自动模式下等待服务端返回后再下发）
+let _pendingWordLength = null;
+
 function distributeWords() {
   const len = parseInt(document.getElementById('wordLength').value);
   if (!len || len < 2 || len > 4) { alert('请填写2-4的词语字数'); return; }
   if (wordMode === 'auto') {
+    _pendingWordLength = len;
     send({ type: 'get_word_pair', wordLength: len });
-    setTimeout(() => {
-      const wA = document.getElementById('manualWordA').value;
-      const wB = document.getElementById('manualWordB').value;
-      if (wA && wB) {
-        window._wordA = wA; window._wordB = wB; window._wordLen = len;
-        send({ type: 'distribute_words', wordA: wA, wordB: wB, wordLength: len });
-        renderJudgePlayerDetails();
-      } else {
-        alert('系统暂无该字数词对，请手动填写');
-        selectMode('manual');
-      }
-    }, 500);
+    // word_pair_result 回来后在 handleMessage 里自动下发
+    showNotice('⏳ 正在获取词对...');
   } else {
     const wA = document.getElementById('manualWordA').value.trim();
     const wB = document.getElementById('manualWordB').value.trim();
     if (!wA || !wB) { alert('请填写两个词语'); return; }
-    if (wA.length !== wB.length) { alert('两个词语字数必须相同'); return; }
+    if (wA.length !== wB.length) { alert(`两个词语字数必须相同（A=${wA.length}字，B=${wB.length}字）`); return; }
     window._wordA = wA; window._wordB = wB; window._wordLen = wA.length;
     send({ type: 'distribute_words', wordA: wA, wordB: wB, wordLength: wA.length });
-    renderJudgePlayerDetails();
   }
 }
 
