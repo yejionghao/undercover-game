@@ -425,6 +425,10 @@ wss.on('connection', (ws) => {
           startPlayer = alive[0];
         }
 
+        if (!startPlayer) {
+          sendTo(ws, { type: 'error', message: '没有存活玩家，无法开始描述' });
+          return;
+        }
         room.describeStartSocketId = startPlayer.id;
         room.lastDescribeStartSocketId = startPlayer.id;
         room.lastPeaceNight = false;
@@ -573,8 +577,13 @@ wss.on('connection', (ws) => {
       // judge disconnected - broadcast to players
       broadcast(currentRoom, { type: 'error', message: '法官已断开连接' });
     } else if (currentRoom.players[socketId]) {
-      delete currentRoom.players[socketId];
-      broadcast(currentRoom, getRoomState(currentRoom));
+      // 游戏进行中（已分配 role）：只标记掉线，不删除，避免影响游戏流程
+      if (currentRoom.players[socketId].role) {
+        currentRoom.players[socketId].disconnected = true;
+      } else {
+        delete currentRoom.players[socketId];
+        broadcast(currentRoom, getRoomState(currentRoom));
+      }
     }
   });
 });
