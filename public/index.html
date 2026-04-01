@@ -715,7 +715,9 @@ function handleMessage(msg) {
         showEl('describeWaitCard', true);
         showEl('discussionCard', false);
         showEl('voteCard', false);
-        showEl('voteWaitCard', false);
+        // 强制清除voteWaitCard残留
+        const vwc2 = document.getElementById('voteWaitCard');
+        if (vwc2) { vwc2.classList.add('hidden'); vwc2.style.display = ''; }
         document.getElementById('describeWaitHint').textContent = `第 ${msg.round} 轮开始，等待 #${msg.startPlayerSeq} ${msg.startPlayerName} 发言`;
       }
       if (isJudge) {
@@ -798,8 +800,12 @@ function handleMessage(msg) {
       if (!isJudge) {
         stopCountdown();
         showEl('discussionCard', false);
+        showEl('describeInputCard', false);
+        showEl('describeWaitCard', false);
+        // 强制隐藏等待卡，显示投票卡（防止残留）
+        const vwc = document.getElementById('voteWaitCard');
+        if (vwc) { vwc.classList.add('hidden'); vwc.style.display = ''; }
         showEl('voteCard', true);
-        showEl('voteWaitCard', false);
         renderVoteOptions(msg.players, msg.voteCandidates, msg.isTie);
       }
       if (isJudge) {
