@@ -281,6 +281,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
       <div style="margin-top:16px">
         <button class="btn-primary" id="btnStartDescRound" onclick="startDescRound()">▶️ 开始本轮描述</button>
         <button class="btn-success hidden" id="btnEndDescRound" onclick="endDescRound()">✅ 本轮描述结束</button>
+        <button class="btn-secondary hidden" id="btnSkipDescribe" onclick="skipDescribe()" style="background:#555">⏭️ 跳过当前玩家</button>
         <button class="btn-danger hidden" id="btnNextRound" onclick="nextRound()">⏭️ 开始下一轮</button>
       </div>
     </div>
@@ -631,6 +632,7 @@ function handleMessage(msg) {
       // 只有法官收到，显示「本轮描述结束」按钮
       showEl('btnEndDescRound', true);
       showEl('btnStartDescRound', false);
+      showEl('btnSkipDescribe', false);
       break;
     }
 
@@ -1011,6 +1013,7 @@ function showJudgeVoteResult(msg) {
 function updateJudgeBtn(phase) {
   const btnStart = document.getElementById('btnStartDescRound');
   const btnEnd = document.getElementById('btnEndDescRound');
+  const btnSkip = document.getElementById('btnSkipDescribe');
   const btnNext = document.getElementById('btnNextRound');
   if (!btnStart) return;
   switch(phase) {
@@ -1018,12 +1021,14 @@ function updateJudgeBtn(phase) {
     case 'started':
       showEl('btnStartDescRound', true);
       showEl('btnEndDescRound', false);
+      showEl('btnSkipDescribe', false);
       showEl('btnNextRound', false);
       btnStart.disabled = false;
       break;
     case 'describing':
       showEl('btnStartDescRound', false);
       showEl('btnEndDescRound', false);
+      showEl('btnSkipDescribe', true);
       showEl('btnNextRound', false);
       break;
     case 'discussing':
@@ -1031,12 +1036,14 @@ function updateJudgeBtn(phase) {
     case 'tie':
       showEl('btnStartDescRound', false);
       showEl('btnEndDescRound', false);
+      showEl('btnSkipDescribe', false);
       showEl('btnNextRound', false);
       break;
     case 'result':
     case 'peace_night':
       showEl('btnStartDescRound', false);
       showEl('btnEndDescRound', false);
+      showEl('btnSkipDescribe', false);
       showEl('btnNextRound', true);
       break;
   }
@@ -1113,6 +1120,10 @@ function startDescRound() {
 function endDescRound() {
   send({ type: 'end_description_round' });
   updateJudgeBtn('discussing');
+}
+
+function skipDescribe() {
+  send({ type: 'skip_describe' });
 }
 
 function nextRound() {

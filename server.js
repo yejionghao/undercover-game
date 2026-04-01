@@ -497,6 +497,29 @@ wss.on('connection', (ws) => {
         break;
       }
 
+      case 'skip_describe': {
+        // 法官跳过当前玩家描述（断线/超时用）
+        if (!currentRoom || !isJudge) return;
+        const room = currentRoom;
+        if (room.phase !== 'describing') return;
+        const skipId = room.describeOrder[room.describeIndex];
+        const skipPlayer = skipId ? room.players[skipId] : null;
+        // 插入一条空描述记录
+        if (skipPlayer) {
+          const record = { round: room.round, seq: skipPlayer.seq, name: skipPlayer.name, text: '（跳过）', socketId: skipId };
+          room.descriptions.push(record);
+          room.allDescriptions.push(record);
+          broadcast(room, { type: 'description_update', round: room.round, seq: skipPlayer.seq, name: skipPlayer.name, text: '（跳过）' });
+        }
+        room.describeIndex++;
+        if (room.describeIndex >= room.describeOrder.length) {
+          if (room.judge) sendTo(room.judge.ws, { type: 'all_described', round: room.round, descriptions: room.descriptions });
+        } else {
+          notifyNextDescribe(room);
+        }
+        break;
+      }
+
       case 'end_description_round': {
         // 法官结束描述环节，进入讨论
         if (!currentRoom || !isJudge) return;
