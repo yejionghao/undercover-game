@@ -528,6 +528,7 @@ wss.on('connection', (ws) => {
         broadcast(room, {
           type: 'discussion_started',
           duration: 300,
+          countdown: 300,
           round: room.round,
           descriptions: room.descriptions
         });
@@ -542,10 +543,13 @@ wss.on('connection', (ws) => {
         break;
       }
 
-      case 'vote_started_manual': {
-        // 法官手动触发投票（倒计时结束后前端也可自动触发）
+      case 'vote_started_manual':
+      case 'end_discussion': {
+        // 法官手动结束讨论，立即进入投票
         if (!currentRoom || !isJudge) return;
-        startVoting(currentRoom);
+        const room = currentRoom;
+        if (room._discussionTimer) { clearTimeout(room._discussionTimer); room._discussionTimer = null; }
+        startVoting(room);
         break;
       }
 

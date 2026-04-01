@@ -284,6 +284,12 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
         <button class="btn-secondary hidden" id="btnSkipDescribe" onclick="skipDescribe()" style="background:#555">⏭️ 跳过当前玩家</button>
         <button class="btn-danger hidden" id="btnNextRound" onclick="nextRound()">⏭️ 开始下一轮</button>
       </div>
+      <!-- 法官讨论倒计时 + 结束讨论按钮 -->
+      <div class="hidden" id="judgeDiscussPanel" style="margin-top:16px;padding:12px;background:#1a2a3a;border-radius:8px;text-align:center">
+        <div style="font-size:13px;color:#888;margin-bottom:6px">💬 讨论倒计时</div>
+        <div style="font-size:28px;font-weight:bold;color:#f0a500" id="judgeCountdownNum">—</div>
+        <button class="btn-danger" style="margin-top:10px;width:100%" onclick="endDiscussion()">🗳️ 结束讨论，开始投票</button>
+      </div>
     </div>
     <!-- 优化4：法官描述记录区 -->
     <div class="card hidden" id="judgeDescLogCard">
@@ -644,11 +650,13 @@ function handleMessage(msg) {
         showEl('describeWaitCard', false);
         showEl('voteCard', false);
         showEl('voteWaitCard', false);
-        // 优化2：前端只显示倒计时UI，不触发投票；服务端统一控制
         startCountdown(msg.countdown || 300, null);
       }
       if (isJudge) {
         updateJudgeBtn('discussing');
+        // 显示法官倒计时面板
+        showEl('judgeDiscussPanel', true);
+        startJudgeCountdown(msg.countdown || 300);
       }
       break;
     }
@@ -664,6 +672,8 @@ function handleMessage(msg) {
         renderVoteOptions(msg.players, msg.voteCandidates, msg.isTie);
       }
       if (isJudge) {
+        stopJudgeCountdown();
+        showEl('judgeDiscussPanel', false);
         updateJudgeBtn('voting');
       }
       break;
@@ -1124,6 +1134,30 @@ function endDescRound() {
 
 function skipDescribe() {
   send({ type: 'skip_describe' });
+}
+
+function endDiscussion() {
+  send({ type: 'end_discussion' });
+}
+
+let _judgeCountdownTimer = null;
+function startJudgeCountdown(seconds) {
+  stopJudgeCountdown();
+  let remaining = seconds;
+  const el = document.getElementById('judgeCountdownNum');
+  function tick() {
+    if (!el) return;
+    const m = Math.floor(remaining / 60);
+    const s = remaining % 60;
+    el.textContent = m + ':' + String(s).padStart(2, '0');
+    if (remaining <= 0) { stopJudgeCountdown(); return; }
+    remaining--;
+    _judgeCountdownTimer = setTimeout(tick, 1000);
+  }
+  tick();
+}
+function stopJudgeCountdown() {
+  if (_judgeCountdownTimer) { clearTimeout(_judgeCountdownTimer); _judgeCountdownTimer = null; }
 }
 
 function nextRound() {
