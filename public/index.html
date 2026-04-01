@@ -219,6 +219,11 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
       <div style="text-align:center;color:#888;margin:8px 0;font-size:13px;">— 或 —</div>
     </div>
     <button class="btn-secondary" onclick="joinRoom()">🎮 加入游戏</button>
+    <div id="rejoinSection" class="hidden" style="margin-top:12px;border-top:1px solid #333;padding-top:12px">
+      <p style="color:#aaa;font-size:13px;margin:0 0 8px">检测到上一局未结束</p>
+      <button class="btn-warning" onclick="manualRejoin()" style="width:100%">🔄 重新加入上局游戏</button>
+      <button onclick="clearRejoin()" style="width:100%;margin-top:6px;background:none;border:none;color:#666;font-size:12px;cursor:pointer">✕ 放弃重连，开始新游戏</button>
+    </div>
   </div>
 
   <!-- ===== 法官等待室 ===== -->
@@ -1232,6 +1237,37 @@ function updateJudgeBtn(phase) {
 
 // ===== 入口操作 =====
 
+function manualRejoin() {
+  const savedToken = localStorage.getItem('ug_token');
+  const savedRoomId = localStorage.getItem('ug_roomId');
+  const savedIsJudge = localStorage.getItem('ug_isJudge');
+  const savedName = localStorage.getItem('ug_name');
+  if (!savedToken || !savedRoomId) { alert('没有找到重连信息'); return; }
+  isJudge = savedIsJudge === '1';
+  myName = savedName || '';
+  roomId = savedRoomId;
+  connectWS(() => {
+    send({ type: 'rejoin', roomId: savedRoomId, token: savedToken });
+  });
+  // 5秒内没收到 rejoin_ok 则提示失败
+  setTimeout(() => {
+    const p = document.querySelector('.page:not(.hidden)');
+    if (p && p.id === 'pageEntry') {
+      showAlert('⚠️ 重连失败，房间可能已结束。请开始新游戏', 5000);
+      clearRejoin();
+    }
+  }, 5000);
+}
+
+function clearRejoin() {
+  localStorage.removeItem('ug_token');
+  localStorage.removeItem('ug_roomId');
+  localStorage.removeItem('ug_isJudge');
+  localStorage.removeItem('ug_name');
+  const s = document.getElementById('rejoinSection');
+  if (s) s.classList.add('hidden');
+}
+
 function claimJudge() {
   myName = document.getElementById('entryName').value.trim();
   if (!myName) { alert('请输入你的名字'); return; }
@@ -1540,26 +1576,25 @@ window.onload = () => {
   const savedIsJudge = localStorage.getItem('ug_isJudge');
   const savedName = localStorage.getItem('ug_name');
 
-  // 只在有 token、房间号与 URL 匹配（或为法官）时尝试重连
-  const targetRoom = urlRoom || savedRoomId;
-  if (savedToken && savedRoomId && targetRoom === savedRoomId) {
-    isJudge = savedIsJudge === '1';
-    myName = savedName || '';
-    roomId = savedRoomId;
-    connectWS(() => {
-      send({ type: 'rejoin', roomId: savedRoomId, token: savedToken });
-    });
-    // 3秒内没收到 rejoin_ok 则显示入口页（可能 token 过期或房间没了）
-    setTimeout(() => {
-      const currentPage = document.querySelector('.page:not(.hidden)');
-      if (!currentPage || currentPage.id === 'pageEntry') {
-        // 重连失败，清除 token，留在入口页
-        localStorage.removeItem('ug_token');
-        localStorage.removeItem('ug_roomId');
-        localStorage.removeItem('ug_isJudge');
-        localStorage.removeItem('ug_name');
-      }
-    }, 3000);
+  if (savedToken && savedRoomId) {
+    // 显示重连区域
+    const rejoinSec = document.getElementById('rejoinSection');
+    if (rejoinSec) {
+      rejoinSec.classList.remove('hidden');
+      const hint = rejoinSec.querySelector('p');
+      if (hint) hint.textContent = `检测到上一局未结束（${savedIsJudge==='1'?'法官':'玩家'} · 房间 ${savedRoomId}）`;
+    }
+
+    // 玩家通过链接进入且 URL 房间号匹配时自动重连
+    const targetRoom = urlRoom || savedRoomId;
+    if (targetRoom === savedRoomId && urlRoom) {
+      isJudge = savedIsJudge === '1';
+      myName = savedName || '';
+      roomId = savedRoomId;
+      connectWS(() => {
+        send({ type: 'rejoin', roomId: savedRoomId, token: savedToken });
+      });
+    }
   }
 };
 </script>
