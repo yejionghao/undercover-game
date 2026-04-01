@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>🕵️ 卧底猜词</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+  background: #1a1a2e;
+  color: #e0e0e0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+}
+#app {
+  width: 100%;
+  max-width: 480px;
+}
+h1 {
+  text-align: center;
+  color: #f0a500;
+  font-size: 28px;
+  margin: 24px 0 8px;
+  letter-spacing: 2px;
+}
+.subtitle {
+  text-align: center;
+  color: #888;
+  font-size: 13px;
+  margin-bottom: 32px;
+}
+.card {
+  background: #16213e;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 16px;
+  border: 1px solid #0f3460;
+}
+.card h2 {
+  color: #f0a500;
+  font-size: 18px;
+  margin-bottom: 16px;
+}
+input[type=text], input[type=number] {
+  width: 100%;
+  background: #0f3460;
+  border: 1px solid #1a4a8a;
+  border-radius: 10px;
+  padding: 14px 16px;
+  color: #fff;
+  font-size: 16px;
+  margin-bottom: 12px;
+  outline: none;
+}
+input:focus { border-color: #f0a500; }
+button {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: opacity 0.2s;
+}
+button:active { opacity: 0.8; }
+.btn-primary { background: #f0a500; color: #1a1a2e; }
+.btn-secondary { background: #0f3460; color: #f0a500; border: 1px solid #f0a500; }
+.btn-danger { background: #c0392b; color: #fff; }
+.btn-success { background: #27ae60; color: #fff; }
+.btn-small { padding: 10px; font-size: 14px; margin-bottom: 8px; }
+.tag {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: bold;
+}
+.tag-A { background: #1a4a8a; color: #74b9ff; }
+.tag-B { background: #1a5c3a; color: #55efc4; }
+.tag-U { background: #5c1a1a; color: #ff7675; }
+.tag-judge { background: #5c4a00; color: #f0a500; }
+.identity-box {
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+.identity-A { background: linear-gradient(135deg, #1a4a8a, #0f3460); border: 2px solid #74b9ff; }
+.identity-B { background: linear-gradient(135deg, #1a5c3a, #0f3460); border: 2px solid #55efc4; }
+.identity-U { background: linear-gradient(135deg, #5c1a1a, #2c0f0f); border: 2px solid #ff7675; }
+.identity-label { font-size: 14px; opacity: 0.7; margin-bottom: 8px; }
+.identity-main { font-size: 48px; font-weight: bold; margin: 12px 0; }
+.identity-A .identity-main { color: #74b9ff; }
+.identity-B .identity-main { color: #55efc4; }
+.identity-U .identity-main { color: #ff7675; }
+.identity-sub { font-size: 14px; opacity: 0.8; }
+.player-list { list-style: none; }
+.player-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #0f3460;
+  font-size: 15px;
+}
+.player-list li:last-child { border-bottom: none; }
+.ready-badge { color: #27ae60; font-size: 13px; }
+.not-ready-badge { color: #888; font-size: 13px; }
+.link-box {
+  background: #0f3460;
+  border-radius: 10px;
+  padding: 12px 16px;
+  word-break: break-all;
+  font-size: 13px;
+  color: #74b9ff;
+  margin-bottom: 12px;
+  cursor: pointer;
+}
+.hint { font-size: 13px; color: #888; margin-bottom: 12px; text-align: center; }
+.radio-group { display: flex; gap: 10px; margin-bottom: 12px; }
+.radio-btn {
+  flex: 1;
+  padding: 12px;
+  border: 2px solid #0f3460;
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+  font-size: 14px;
+  background: #0f3460;
+  color: #888;
+  transition: all 0.2s;
+  width: auto;
+  margin: 0;
+}
+.radio-btn.active { border-color: #f0a500; color: #f0a500; background: #1a1a2e; }
+.undercover-list { list-style: none; }
+.undercover-list li {
+  padding: 8px 12px;
+  background: #5c1a1a;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  color: #ff7675;
+  font-size: 15px;
+}
+.submission-item {
+  background: #0f3460;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+.submission-item .s-name { font-weight: bold; color: #f0a500; margin-bottom: 4px; }
+.submission-item .s-detail { font-size: 13px; color: #aaa; line-height: 1.6; }
+.result-box {
+  background: #0f3460;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.result-box h3 { color: #f0a500; margin-bottom: 8px; font-size: 15px; }
+.result-box p { font-size: 14px; color: #ccc; line-height: 1.8; }
+.word-reveal { font-size: 22px; font-weight: bold; margin: 8px 0; }
+.word-A { color: #74b9ff; }
+.word-B { color: #55efc4; }
+.hidden { display: none !important; }
+.status-bar {
+  text-align: center;
+  font-size: 13px;
+  color: #888;
+  padding: 8px;
+  margin-bottom: 16px;
+}
+.conn-ok { color: #27ae60; }
+.conn-err { color: #c0392b; }
+textarea {
+  width: 100%;
+  background: #0f3460;
+  border: 1px solid #1a4a8a;
+  border-radius: 10px;
+  padding: 12px 16px;
+  color: #fff;
+  font-size: 15px;
+  margin-bottom: 12px;
+  outline: none;
+  resize: none;
+  height: 80px;
+}
+textarea:focus { border-color: #f0a500; }
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>🕵️ 卧底猜词</h1>
+  <p class="subtitle">Who is the undercover?</p>
+  <div class="status-bar"><span id="connStatus">⏳ 连接中...</span></div>
+
+  <!-- 入口页 -->
+  <div id="pageEntry" class="card">
+    <h2>👋 进入游戏</h2>
+    <input type="text" id="entryName" placeholder="输入你的名字" maxlength="10">
+    <div id="judgeSection">
+      <button class="btn-primary" onclick="claimJudge()">⚖️ 我是法官，创建游戏</button>
+      <div style="text-align:center;color:#888;margin:8px 0;font-size:13px;">— 或 —</div>
+    </div>
+    <button class="btn-secondary" onclick="joinRoom()">🎮 加入游戏</button>
+  </div>
+
+  <!-- 法官等待室 -->
+  <div id="pageJudgeWaiting" class="hidden">
+    <div class="card">
+      <h2>⚖️ 法官控制台</h2>
+      <p class="hint">将以下链接分享给玩家</p>
+      <div class="link-box" onclick="copyLink()" id="shareLink">点击复制链接</div>
+      <button class="btn-secondary btn-small" onclick="copyLink()">📋 复制链接</button>
+    </div>
+    <div class="card">
+      <h2>👥 玩家列表 <span id="playerCountBadge"></span></h2>
+      <ul class="player-list" id="judgePlayerList"></ul>
+      <p class="hint" id="waitingHint">等待玩家加入并准备...</p>
+      <button class="btn-primary" id="btnStartGame" onclick="startGame()" disabled>🎯 开始游戏</button>
+    </div>
+  </div>
+
+  <!-- 玩家等待室 -->
+  <div id="pagePlayerWaiting" class="hidden">
+    <div class="card">
+      <h2>🎮 等待开始</h2>
+      <p class="hint">已加入房间，等待法官开始游戏</p>
+      <ul class="player-list" id="playerRoomList"></ul>
+      <button class="btn-primary" id="btnReady" onclick="setReady()">✅ 我准备好了</button>
+      <p class="hint" id="readyStatus"></p>
+    </div>
+  </div>
+
+  <!-- 法官下发词语 -->
+  <div id="pageJudgeWord" class="hidden">
+    <div class="card">
+      <h2>📝 下发词语</h2>
+      <p class="hint">游戏已开始，请设置本轮词语</p>
+      <input type="number" id="wordLength" placeholder="词语字数（如：2）" min="2" max="4">
+      <div class="radio-group">
+        <div class="radio-btn active" id="modeAuto" onclick="selectMode('auto')">🤖 系统生成</div>
+        <div class="radio-btn" id="modeManual" onclick="selectMode('manual')">✏️ 手动填写</div>
+      </div>
+      <div id="manualInput" class="hidden">
+        <input type="text" id="manualWordA" placeholder="平民A组的词语">
+        <input type="text" id="manualWordB" placeholder="平民B组的词语">
+      </div>
+      <button class="btn-primary" onclick="distributeWords()">📤 下发词语</button>
+    </div>
+    <div class="card hidden" id="judgeWordInfo">
+      <h2>✅ 词语已下发</h2>
+      <p style="margin-bottom:8px;font-size:14px;color:#aaa;">本轮词语：</p>
+      <p class="word-reveal word-A" id="infoWordA"></p>
+      <p class="word-reveal word-B" id="infoWordB"></p>
+      <p style="font-size:13px;color:#888;margin-top:8px;">卧底只知道字数，不知道具体词语</p>
+      <button class="btn-danger" style="margin-top:16px" onclick="startSettlement()">🏁 进入结算</button>
+    </div>
+  </div>
+
+  <!-- 玩家身份页 -->
+  <div id="pagePlayerIdentity" class="hidden">
+    <div id="identityBox"></div>
+    <div id="undercoverSection" class="hidden card">
+      <h2>🕵️ 你的同伴</h2>
+      <ul class="undercover-list" id="undercoverList"></ul>
+    </div>
+    <div class="card">
+      <p class="hint">线下开始发言，等待法官进入结算...</p>
+    </div>
+  </div>
+
+  <!-- 玩家结算提交 -->
+  <div id="pagePlayerSettlement" class="hidden">
+    <div class="card">
+      <h2>🗳️ 提交猜测</h2>
+      <p class="hint">填写你认为的两组平民及其词语</p>
+      <label style="font-size:13px;color:#aaa;display:block;margin-bottom:4px;">第一组平民的名字（逗号分隔）</label>
+      <input type="text" id="groupANames" placeholder="例：张三, 李四">
+      <label style="font-size:13px;color:#aaa;display:block;margin-bottom:4px;">第一组平民的词语</label>
+      <input type="text" id="groupAWord" placeholder="例：西瓜">
+      <label style="font-size:13px;color:#aaa;display:block;margin-bottom:4px;">第二组平民的名字（逗号分隔）</label>
+      <input type="text" id="groupBNames" placeholder="例：王五, 赵六">
+      <label style="font-size:13px;color:#aaa;display:block;margin-bottom:4px;">第二组平民的词语</label>
+      <input type="text" id="groupBWord" placeholder="例：冬瓜">
+      <button class="btn-primary" onclick="submitResult()">📨 提交猜测</button>
+    </div>
+  </div>
+
+  <!-- 玩家等待结果 -->
+  <div id="pagePlayerWaitResult" class="hidden">
+    <div class="card" style="text-align:center;padding:40px 24px;">
+      <div style="font-size:48px;margin-bottom:16px;">⏳</div>
+      <h2 style="color:#f0a500;margin-bottom:8px;">已提交</h2>
+      <p class="hint">等待法官宣布结果...</p>
+    </div>
+  </div>
+
+  <!-- 法官结算页 -->
+  <div id="pageJudgeSettlement" class="hidden">
+    <div class="card">
+      <h2>📊 玩家提交情况</h2>
+      <p class="hint" id="submissionCount">已提交：0 人</p>
+      <div id="submissionList"></div>
+      <button class="btn-danger" onclick="announceResult()">📢 宣布游戏结束</button>
+    </div>
+  </div>
+
+  <!-- 游戏结束页 -->
+  <div id="pageEnded" class="hidden">
+    <div class="card" style="text-align:center">
+      <h2 style="font-size:24px;margin-bottom:4px;">🎉 游戏结束</h2>
+      <p class="hint">本轮词语揭晓</p>
+      <div class="result-box">
+        <h3>🔵 平民A组的词：</h3>
+        <p class="word-reveal word-A" id="endWordA"></p>
+      </div>
+      <div class="result-box">
+        <h3>🟢 平民B组的词：</h3>
+        <p class="word-reveal word-B" id="endWordB"></p>
+      </div>
+    </div>
+    <div class="card">
+      <h2>📋 所有人的猜测</h2>
+      <div id="endSubmissions"></div>
+    </div>
+    <button class="btn-secondary" onclick="location.reload()">🔄 再来一局</button>
+  </div>
+</div>
+
+<script>
+const WS_URL = location.protocol === 'https:'
+  ? `wss://${location.host}`
+  : `ws://${location.host}`;
+
+let ws;
+let myRole = null;
+let myName = '';
+let roomId = '';
+let isJudge = false;
+let wordMode = 'auto';
+
+function getUrlParam(key) {
+  return new URLSearchParams(location.search).get(key);
+}
+
+function showPage(id) {
+  const pages = ['pageEntry','pageJudgeWaiting','pagePlayerWaiting',
+    'pageJudgeWord','pagePlayerIdentity','pagePlayerSettlement',
+    'pagePlayerWaitResult','pageJudgeSettlement','pageEnded'];
+  pages.forEach(p => document.getElementById(p).classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+
+function send(msg) {
+  if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(msg));
+}
+
+function connectWS(onOpen) {
+  ws = new WebSocket(WS_URL);
+  ws.onopen = () => {
+    document.getElementById('connStatus').innerHTML = '<span class="conn-ok">🟢 已连接</span>';
+    if (onOpen) onOpen();
+  };
+  ws.onerror = () => {
+    document.getElementById('connStatus').innerHTML = '<span class="conn-err">🔴 连接失败，请刷新</span>';
+  };
+  ws.onclose = () => {
+    document.getElementById('connStatus').innerHTML = '<span class="conn-err">🔴 连接断开，请刷新</span>';
+  };
+  ws.onmessage = (e) => handleMessage(JSON.parse(e.data));
+}
+
+function handleMessage(msg) {
+  switch(msg.type) {
+    case 'judge_confirmed':
+      roomId = msg.roomId;
+      const gameUrl = `${location.origin}?room=${roomId}`;
+      document.getElementById('shareLink').textContent = gameUrl;
+      showPage('pageJudgeWaiting');
+      break;
+
+    case 'joined':
+      roomId = msg.roomId;
+      showPage('pagePlayerWaiting');
+      break;
+
+    case 'room_state':
+      updateRoomState(msg);
+      break;
+
+    case 'game_started':
+      myRole = msg.role;
+      if (isJudge) {
+        showPage('pageJudgeWord');
+      } else {
+        showIdentity(msg);
+      }
+      break;
+
+    case 'word_pair_result':
+      document.getElementById('manualWordA').value = msg.wordA;
+      document.getElementById('manualWordB').value = msg.wordB;
+      break;
+
+    case 'your_word':
+      showWordOnIdentity(msg);
+      break;
+
+    case 'words_distributed':
+      document.getElementById('judgeWordInfo').classList.remove('hidden');
+      document.getElementById('infoWordA').textContent = `平民A：${msg.wordA}`;
+      document.getElementById('infoWordB').textContent = `平民B：${msg.wordB}`;
+      break;
+
+    case 'settlement_started':
+      if (!isJudge) showPage('pagePlayerSettlement');
+      break;
+
+    case 'submit_ok':
+      showPage('pagePlayerWaitResult');
+      break;
+
+    case 'submissions_update':
+      updateSubmissions(msg);
+      break;
+
+    case 'game_ended':
+      showEnded(msg);
+      break;
+
+    case 'error':
+      alert(msg.message);
+      break;
+  }
+}
+
+function updateRoomState(msg) {
+  if (isJudge) {
+    const list = document.getElementById('judgePlayerList');
+    list.innerHTML = msg.players.map(p =>
+      `<li><span>${p.name}</span><span class="${p.ready ? 'ready-badge' : 'not-ready-badge'}">${p.ready ? '✅ 已准备' : '⏳ 未准备'}</span></li>`
+    ).join('');
+    document.getElementById('playerCountBadge').textContent = `(${msg.players.length}人)`;
+    const allReady = msg.players.length >= 7 && msg.players.every(p => p.ready);
+    const btn = document.getElementById('btnStartGame');
+    btn.disabled = !allReady;
+    if (msg.players.length < 7) {
+      document.getElementById('waitingHint').textContent = `还需要 ${7 - msg.players.length} 人加入（最少7人）`;
+    } else if (!allReady) {
+      document.getElementById('waitingHint').textContent = '等待所有人准备...';
+    } else {
+      document.getElementById('waitingHint').textContent = '所有人已准备，可以开始！';
+    }
+  } else {
+    const list = document.getElementById('playerRoomList');
+    if (list) {
+      list.innerHTML = msg.players.map(p =>
+        `<li><span>${p.name}</span><span class="${p.ready ? 'ready-badge' : 'not-ready-badge'}">${p.ready ? '✅ 已准备' : '⏳ 未准备'}</span></li>`
+      ).join('');
+    }
+  }
+}
+
+function showIdentity(msg) {
+  showPage('pagePlayerIdentity');
+  const box = document.getElementById('identityBox');
+  if (msg.role === 'A') {
+    box.innerHTML = `
+      <div class="identity-box identity-A">
+        <div class="identity-label">你的身份</div>
+        <div class="identity-main">👥 平民</div>
+        <div class="identity-sub">你是 <strong style="color:#74b9ff">A组平民</strong>，词语稍后下发</div>
+      </div>`;
+  } else if (msg.role === 'B') {
+    box.innerHTML = `
+      <div class="identity-box identity-B">
+        <div class="identity-label">你的身份</div>
+        <div class="identity-main">👥 平民</div>
+        <div class="identity-sub">你是 <strong style="color:#55efc4">B组平民</strong>，词语稍后下发</div>
+      </div>`;
+  } else {
+    box.innerHTML = `
+      <div class="identity-box identity-U">
+        <div class="identity-label">你的身份</div>
+        <div class="identity-main">🕵️ 卧底</div>
+        <div class="identity-sub">你的任务：伪装成平民，猜出词语</div>
+      </div>`;
+    const sec = document.getElementById('undercoverSection');
+    sec.classList.remove('hidden');
+    document.getElementById('undercoverList').innerHTML =
+      msg.undercoverList.map(n => `<li>🕵️ ${n}</li>`).join('');
+  }
+}
+
+function showWordOnIdentity(msg) {
+  const box = document.getElementById('identityBox');
+  if (msg.role === 'A') {
+    box.innerHTML = `
+      <div class="identity-box identity-A">
+        <div class="identity-label">你的词语（A组平民）</div>
+        <div class="identity-main" style="font-size:36px">${msg.word}</div>
+        <div class="identity-sub">记住这个词，不要直说</div>
+      </div>`;
+  } else if (msg.role === 'B') {
+    box.innerHTML = `
+      <div class="identity-box identity-B">
+        <div class="identity-label">你的词语（B组平民）</div>
+        <div class="identity-main" style="font-size:36px">${msg.word}</div>
+        <div class="identity-sub">记住这个词，不要直说</div>
+      </div>`;
+  } else {
+    box.innerHTML = `
+      <div class="identity-box identity-U">
+        <div class="identity-label">🕵️ 卧底</div>
+        <div class="identity-main" style="font-size:36px">${msg.wordLength}</div>
+        <div class="identity-sub">平民的词是 <strong>${msg.wordLength} 个字</strong>，你来猜！</div>
+      </div>`;
+  }
+}
+
+function updateSubmissions(msg) {
+  if (!isJudge) return;
+  showPage('pageJudgeSettlement');
+  document.getElementById('submissionCount').textContent =
+    `已提交：${msg.submissions.length} / ${msg.total} 人`;
+  document.getElementById('submissionList').innerHTML = msg.submissions.map(s => `
+    <div class="submission-item">
+      <div class="s-name">${s.name} <span class="tag tag-${s.role === 'undercover' ? 'U' : s.role}">${s.role === 'undercover' ? '卧底' : s.role === 'A' ? 'A组' : 'B组'}</span></div>
+      <div class="s-detail">
+        第一组：${s.groupA_names} → 词：${s.groupA_word}<br>
+        第二组：${s.groupB_names} → 词：${s.groupB_word}
+      </div>
+    </div>`).join('');
+}
+
+function showEnded(msg) {
+  showPage('pageEnded');
+  document.getElementById('endWordA').textContent = msg.wordA;
+  document.getElementById('endWordB').textContent = msg.wordB;
+  document.getElementById('endSubmissions').innerHTML = msg.submissions.map(s => `
+    <div class="submission-item">
+      <div class="s-name">${s.name}</div>
+      <div class="s-detail">
+        第一组：${s.groupA_names} → ${s.groupA_word}<br>
+        第二组：${s.groupB_names} → ${s.groupB_word}
+      </div>
+    </div>`).join('');
+}
+
+function claimJudge() {
+  myName = document.getElementById('entryName').value.trim();
+  if (!myName) { alert('请输入你的名字'); return; }
+  isJudge = true;
+  const newRoomId = Math.random().toString(36).substr(2, 6).toUpperCase();
+  roomId = newRoomId;
+  connectWS(() => {
+    send({ type: 'claim_judge', roomId, name: myName });
+  });
+}
+
+function joinRoom() {
+  myName = document.getElementById('entryName').value.trim();
+  if (!myName) { alert('请输入你的名字'); return; }
+  const urlRoom = getUrlParam('room');
+  if (!urlRoom) { alert('请通过法官分享的链接加入游戏'); return; }
+  roomId = urlRoom;
+  connectWS(() => {
+    send({ type: 'join_room', roomId, name: myName });
+  });
+}
+
+function setReady() {
+  send({ type: 'player_ready' });
+  document.getElementById('btnReady').disabled = true;
+  document.getElementById('btnReady').textContent = '✅ 已准备';
+  document.getElementById('readyStatus').textContent = '等待其他人准备...';
+}
+
+function startGame() {
+  send({ type: 'start_game' });
+}
+
+function selectMode(mode) {
+  wordMode = mode;
+  document.getElementById('modeAuto').classList.toggle('active', mode === 'auto');
+  document.getElementById('modeManual').classList.toggle('active', mode === 'manual');
+  document.getElementById('manualInput').classList.toggle('hidden', mode === 'auto');
+}
+
+function distributeWords() {
+  const len = parseInt(document.getElementById('wordLength').value);
+  if (!len || len < 2 || len > 4) { alert('请填写2-4的词语字数'); return; }
+  if (wordMode === 'auto') {
+    send({ type: 'get_word_pair', wordLength: len });
+    setTimeout(() => {
+      const wA = document.getElementById('manualWordA').value;
+      const wB = document.getElementById('manualWordB').value;
+      if (wA && wB) {
+        send({ type: 'distribute_words', wordA: wA, wordB: wB, wordLength: len });
+      } else {
+        alert('系统暂无该字数词对，请手动填写');
+        selectMode('manual');
+      }
+    }, 500);
+  } else {
+    const wA = document.getElementById('manualWordA').value.trim();
+    const wB = document.getElementById('manualWordB').value.trim();
+    if (!wA || !wB) { alert('请填写两个词语'); return; }
+    if (wA.length !== wB.length) { alert('两个词语字数必须相同'); return; }
+    send({ type: 'distribute_words', wordA: wA, wordB: wB, wordLength: wA.length });
+  }
+}
+
+function startSettlement() {
+  if (!confirm('确定进入结算阶段？')) return;
+  send({ type: 'start_settlement' });
+  showPage('pageJudgeSettlement');
+}
+
+function submitResult() {
+  const gANames = document.getElementById('groupANames').value.trim();
+  const gAWord = document.getElementById('groupAWord').value.trim();
+  const gBNames = document.getElementById('groupBNames').value.trim();
+  const gBWord = document.getElementById('groupBWord').value.trim();
+  if (!gANames || !gAWord || !gBNames || !gBWord) {
+    alert('请填写完整信息');
+    return;
+  }
+  send({ type: 'submit_result', groupA_names: gANames, groupA_word: gAWord, groupB_names: gBNames, groupB_word: gBWord });
+}
+
+function announceResult() {
+  if (!confirm('确定宣布游戏结束并揭晓词语？')) return;
+  send({ type: 'announce_result' });
+}
+
+function copyLink() {
+  const text = document.getElementById('shareLink').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    alert('链接已复制！');
+  }).catch(() => {
+    prompt('请手动复制以下链接：', text);
+  });
+}
+
+window.onload = () => {
+  const urlRoom = getUrlParam('room');
+  if (urlRoom) {
+    document.getElementById('judgeSection').classList.add('hidden');
+  }
+};
+</script>
+</body>
+</html>
