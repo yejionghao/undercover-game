@@ -62,25 +62,45 @@ function getOrCreateRoom(roomId) {
     rooms[roomId] = {
       id: roomId,
       judge: null,
-      players: {},   // socketId -> { name, ready, role, ws }
-      phase: 'waiting', // waiting | started | settlement | ended
+      players: {},   // socketId -> { id, name, ready, role, ws, seq, alive }
+      phase: 'waiting', // waiting | started | describing | discussing | voting | settlement | ended
       wordA: null,
       wordB: null,
       wordLength: null,
-      submissions: {}
+      submissions: {},
+
+      // 新增：多轮流程状态
+      round: 0,                  // 当前轮次（从1开始）
+      playerSeqList: [],         // 按序号排列的 socketId 列表
+      aliveSeqList: [],          // 当前存活玩家 socketId（按序号）
+      eliminated: [],            // 已淘汰的 socketId 列表
+      descriptions: [],          // 本轮描述记录 [{round, seq, name, text}]
+      allDescriptions: [],       // 所有轮次的描述记录
+      describeOrder: [],         // 本轮描述顺序 [socketId]
+      describeIndex: 0,          // 当前描述到第几个
+      describeStartSocketId: null, // 本轮描述起点 socketId
+      lastEliminatedSocketId: null, // 上轮被淘汰的 socketId
+      lastPeaceNight: false,     // 上轮是否平安夜
+      lastDescribeStartSocketId: null, // 上轮起点
+
+      // 投票
+      votes: {},                 // socketId -> targetSocketId | null
+      tieSocketIds: [],          // 平票玩家
+      tieRound: 0,               // 加时投票次数（0=正常，1=第一次加时）
     };
   }
   return rooms[roomId];
 }
 
 function broadcast(room, msg, excludeId) {
+  const msgStr = JSON.stringify(msg);
   Object.values(room.players).forEach(p => {
     if (p.ws && p.ws.readyState === 1 && p.id !== excludeId) {
-      p.ws.send(JSON.stringify(msg));
+      p.ws.send(msgStr);
     }
   });
   if (room.judge && room.judge.ws && room.judge.ws.readyState === 1 && room.judge.id !== excludeId) {
-    room.judge.ws.send(JSON.stringify(msg));
+    room.judge.ws.send(msgStr);
   }
 }
 
@@ -90,7 +110,7 @@ function sendTo(ws, msg) {
 
 function getRoomState(room) {
   const players = Object.values(room.players).map(p => ({
-    id: p.id, name: p.name, ready: p.ready
+    id: p.id, name: p.name, ready: p.ready, seq: p.seq
   }));
   return {
     type: 'room_state',
@@ -100,6 +120,59 @@ function getRoomState(room) {
     players,
     playerCount: players.length
   };
+}
+
+// 获取存活玩家（按序号排列）
+function getAlivePlayers(room) {
+  return room.playerSeqList
+    .map(id => room.players[id])
+    .filter(p => p && p.alive);
+}
+
+// 从指定 socketId 之后的下一个存活玩家（循环）
+function getNextAliveAfter(room, socketId) {
+  const alive = getAlivePlayers(room);
+  if (alive.length === 0) return null;
+  const idx = room.playerSeqList.indexOf(socketId);
+  if (idx === -1) return alive[0];
+  // 从 idx+1 开始往后找存活
+  for (let i = 1; i <= room.playerSeqList.length; i++) {
+    const nextId = room.playerSeqList[(idx + i) % room.playerSeqList.length];
+    if (room.players[nextId] && room.players[nextId].alive) return room.players[nextId];
+  }
+  return null;
+}
+
+// 构建本轮描述顺序（从 startSocketId 开始，只含存活玩家）
+function buildDescribeOrder(room, startSocketId) {
+  const order = [];
+  const total = room.playerSeqList.length;
+  const startIdx = room.playerSeqList.indexOf(startSocketId);
+  if (startIdx === -1) return getAlivePlayers(room).map(p => p.id);
+  for (let i = 0; i < total; i++) {
+    const id = room.playerSeqList[(startIdx + i) % total];
+    if (room.players[id] && room.players[id].alive) {
+      order.push(id);
+    }
+  }
+  return order;
+}
+
+// 检查游戏结束条件
+function checkGameOver(room) {
+  const alive = getAlivePlayers(room);
+  const aliveUndercover = alive.filter(p => p.role === 'undercover');
+  const aliveCivilians = alive.filter(p => p.role !== 'undercover');
+
+  if (aliveUndercover.length === 0) {
+    // 所有卧底淘汰 → 平民胜，进入结算
+    return { over: true, winner: 'civilian' };
+  }
+  if (aliveCivilians.length <= aliveUndercover.length) {
+    // 平民数 <= 卧底数 → 卧底胜
+    return { over: true, winner: 'undercover' };
+  }
+  return { over: false };
 }
 
 wss.on('connection', (ws) => {
@@ -113,6 +186,8 @@ wss.on('connection', (ws) => {
     try { msg = JSON.parse(raw); } catch { return; }
 
     switch (msg.type) {
+
+      // ===== 原有消息处理 =====
 
       case 'claim_judge': {
         const room = getOrCreateRoom(msg.roomId);
@@ -134,7 +209,7 @@ wss.on('connection', (ws) => {
           sendTo(ws, { type: 'error', message: '游戏已开始，无法加入' });
           return;
         }
-        room.players[socketId] = { id: socketId, name: msg.name, ready: false, ws };
+        room.players[socketId] = { id: socketId, name: msg.name, ready: false, ws, seq: 0, alive: true };
         currentRoom = room;
         sendTo(ws, { type: 'joined', roomId: room.id });
         broadcast(room, getRoomState(room));
@@ -172,16 +247,42 @@ wss.on('connection', (ws) => {
           else if (i < sizeA + sizeB) p.role = 'B';
           else p.role = 'undercover';
         });
+
+        // 分配序号（按 players 加入顺序，不打乱）
+        const joinOrder = Object.values(room.players);
+        joinOrder.forEach((p, i) => {
+          p.seq = i + 1;
+          p.alive = true;
+        });
+        room.playerSeqList = joinOrder.map(p => p.id);
+
         room.phase = 'started';
+
         const undercoverNames = shuffled.filter(p => p.role === 'undercover').map(p => p.name);
         players.forEach(p => {
           sendTo(p.ws, {
             type: 'game_started',
             role: p.role,
+            seq: p.seq,
             undercoverList: p.role === 'undercover' ? undercoverNames : null
           });
         });
-        sendTo(room.judge.ws, { type: 'game_started', role: 'judge', playerCount: total, sizes });
+        sendTo(room.judge.ws, {
+          type: 'game_started',
+          role: 'judge',
+          playerCount: total,
+          sizes,
+          // 法官看到所有玩家的身份和序号
+          playerDetails: joinOrder.map(p => ({
+            id: p.id, name: p.name, seq: p.seq, role: p.role
+          }))
+        });
+
+        // 广播玩家序号
+        broadcast(room, {
+          type: 'player_seq',
+          players: joinOrder.map(p => ({ id: p.id, name: p.name, seq: p.seq }))
+        });
         break;
       }
 
@@ -213,6 +314,7 @@ wss.on('connection', (ws) => {
         break;
       }
 
+      // 保留旧的 start_settlement（从法官手动触发，兼容旧流程）
       case 'start_settlement': {
         if (!currentRoom || !isJudge) return;
         currentRoom.phase = 'settlement';
@@ -235,13 +337,13 @@ wss.on('connection', (ws) => {
           groupB_word: msg.groupB_word
         };
         sendTo(ws, { type: 'submit_ok' });
-        // 通知法官有新提交
         if (room.judge) {
           const submissions = Object.values(room.submissions);
+          const alivePlayers = getAlivePlayers(room);
           sendTo(room.judge.ws, {
             type: 'submissions_update',
             submissions,
-            total: Object.keys(room.players).length
+            total: alivePlayers.length
           });
         }
         break;
@@ -255,41 +357,177 @@ wss.on('connection', (ws) => {
         const subs = Object.values(room.submissions);
         const correct = (s) => s.groupA_word === room.wordA && s.groupB_word === room.wordB;
 
-        // 卧底全部猜对 → 卧底胜；否则看平民是否全部猜对
         const undercoverSubs = subs.filter(s => s.role === 'undercover');
         const civilianSubs = subs.filter(s => s.role !== 'undercover');
 
-        // 卧底任意一人猜对 → 卧底胜
         const anyUndercoverCorrect = undercoverSubs.length > 0 && undercoverSubs.some(correct);
-
-        // 平民 A组 和 B组 各自至少 1 人猜对 → 平民胜条件
         const groupASubs = civilianSubs.filter(s => s.role === 'A');
         const groupBSubs = civilianSubs.filter(s => s.role === 'B');
         const civilianWin = groupASubs.some(correct) && groupBSubs.some(correct);
 
         let winner;
-        if (anyUndercoverCorrect) {
-          winner = 'undercover';
-        } else if (civilianWin) {
-          winner = 'civilian';
-        } else {
-          // 卧底全猜错，但平民未满足条件，仍卧底胜
-          winner = 'undercover';
-        }
+        if (anyUndercoverCorrect) winner = 'undercover';
+        else if (civilianWin) winner = 'civilian';
+        else winner = 'undercover';
 
         const result = {
           type: 'game_ended',
           wordA: room.wordA,
           wordB: room.wordB,
-          winner, // 'undercover' | 'civilian'
-          submissions: subs.map(s => ({
-            ...s,
-            correct: correct(s)
-          }))
+          winner,
+          submissions: subs.map(s => ({ ...s, correct: correct(s) }))
         };
 
         broadcast(room, result);
         sendTo(room.judge.ws, result);
+        break;
+      }
+
+      // ===== 新增：多轮流程消息 =====
+
+      case 'start_description_round': {
+        // 法官发起开始本轮描述
+        if (!currentRoom || !isJudge) return;
+        const room = currentRoom;
+        room.round += 1;
+        room.descriptions = [];
+        room.describeIndex = 0;
+        room.phase = 'describing';
+        room.tieRound = 0;
+
+        // 确定起点
+        let startPlayer;
+        const alive = getAlivePlayers(room);
+
+        if (room.round === 1) {
+          // 第一轮：随机抽取存活玩家
+          startPlayer = alive[Math.floor(Math.random() * alive.length)];
+        } else if (room.lastPeaceNight) {
+          // 平安夜后：从上轮起点的下一个开始
+          startPlayer = getNextAliveAfter(room, room.lastDescribeStartSocketId);
+        } else if (room.lastEliminatedSocketId) {
+          // 上轮有淘汰：从被淘汰者的下一序号开始
+          startPlayer = getNextAliveAfter(room, room.lastEliminatedSocketId);
+        } else {
+          startPlayer = alive[0];
+        }
+
+        room.describeStartSocketId = startPlayer.id;
+        room.lastDescribeStartSocketId = startPlayer.id;
+        room.lastPeaceNight = false;
+        room.describeOrder = buildDescribeOrder(room, startPlayer.id);
+
+        broadcast(room, {
+          type: 'start_description_round',
+          round: room.round,
+          startPlayerSeq: startPlayer.seq,
+          startPlayerName: startPlayer.name,
+          startPlayerSocketId: startPlayer.id,
+          aliveCount: alive.length
+        });
+
+        // 通知第一个该描述的玩家
+        notifyNextDescribe(room);
+        break;
+      }
+
+      case 'submit_description': {
+        if (!currentRoom) return;
+        const room = currentRoom;
+        const player = room.players[socketId];
+        if (!player) return;
+
+        // 校验是否轮到此人
+        const expectedId = room.describeOrder[room.describeIndex];
+        if (expectedId !== socketId) {
+          sendTo(ws, { type: 'error', message: '还没轮到你描述' });
+          return;
+        }
+
+        const record = {
+          round: room.round,
+          seq: player.seq,
+          name: player.name,
+          text: msg.text || '',
+          socketId: socketId
+        };
+        room.descriptions.push(record);
+        room.allDescriptions.push(record);
+
+        // 广播新描述
+        broadcast(room, {
+          type: 'description_update',
+          round: room.round,
+          seq: player.seq,
+          name: player.name,
+          text: msg.text || ''
+        });
+
+        // 移到下一个
+        room.describeIndex++;
+        if (room.describeIndex >= room.describeOrder.length) {
+          // 所有人描述完毕
+          if (room.judge) {
+            sendTo(room.judge.ws, {
+              type: 'all_described',
+              round: room.round,
+              descriptions: room.descriptions
+            });
+          }
+        } else {
+          notifyNextDescribe(room);
+        }
+        break;
+      }
+
+      case 'end_description_round': {
+        // 法官结束描述环节，进入讨论
+        if (!currentRoom || !isJudge) return;
+        const room = currentRoom;
+        room.phase = 'discussing';
+        broadcast(room, {
+          type: 'discussion_started',
+          countdown: 300,
+          round: room.round,
+          descriptions: room.descriptions
+        });
+        break;
+      }
+
+      case 'vote_started_manual': {
+        // 法官手动触发投票（倒计时结束后前端也可自动触发）
+        if (!currentRoom || !isJudge) return;
+        startVoting(currentRoom);
+        break;
+      }
+
+      case 'submit_vote': {
+        if (!currentRoom) return;
+        const room = currentRoom;
+        const voter = room.players[socketId];
+        if (!voter || !voter.alive) return;
+        if (room.phase !== 'voting') return;
+
+        // target: socketId of voted player, or null for abstain
+        room.votes[socketId] = msg.target || null;
+
+        sendTo(ws, { type: 'vote_received' });
+
+        // 检查是否所有存活玩家都投票了
+        const alive = getAlivePlayers(room);
+        const allVoted = alive.every(p => room.votes[p.id] !== undefined);
+        if (allVoted) {
+          processVotes(room);
+        }
+        break;
+      }
+
+      case 'next_round': {
+        // 法官触发下一轮（平安夜后或结果公布后）
+        if (!currentRoom || !isJudge) return;
+        // 重置为 started 状态让法官可以再次点「开始本轮描述」
+        currentRoom.phase = 'started';
+        broadcast(currentRoom, { type: 'round_ready', round: currentRoom.round + 1 });
         break;
       }
 
@@ -302,13 +540,223 @@ wss.on('connection', (ws) => {
   ws.on('close', () => {
     if (!currentRoom) return;
     if (isJudge) {
-      // judge disconnected
+      // judge disconnected - broadcast to players
+      broadcast(currentRoom, { type: 'error', message: '法官已断开连接' });
     } else if (currentRoom.players[socketId]) {
       delete currentRoom.players[socketId];
       broadcast(currentRoom, getRoomState(currentRoom));
     }
   });
 });
+
+// 通知下一个该描述的玩家
+function notifyNextDescribe(room) {
+  const nextId = room.describeOrder[room.describeIndex];
+  const nextPlayer = room.players[nextId];
+  if (!nextPlayer) return;
+
+  // 广播当前轮到谁
+  broadcast(room, {
+    type: 'turn_to_describe',
+    seq: nextPlayer.seq,
+    name: nextPlayer.name,
+    socketId: nextId,
+    index: room.describeIndex,
+    total: room.describeOrder.length
+  });
+
+  // 单独通知该玩家
+  sendTo(nextPlayer.ws, {
+    type: 'your_turn_describe',
+    seq: nextPlayer.seq,
+    round: room.round,
+    descIndex: room.describeIndex,
+    descTotal: room.describeOrder.length
+  });
+}
+
+// 开始投票环节
+function startVoting(room, tiePlayerIds) {
+  room.phase = 'voting';
+  room.votes = {};
+  const alive = getAlivePlayers(room);
+
+  // 如果是加时投票，只有平票的人
+  const voteCandidates = tiePlayerIds
+    ? alive.filter(p => tiePlayerIds.includes(p.id))
+    : alive;
+
+  // 广播投票开始
+  broadcast(room, {
+    type: 'vote_started',
+    round: room.round,
+    isTie: !!tiePlayerIds,
+    alivePlayers: alive.map(p => ({ id: p.id, name: p.name, seq: p.seq })),
+    voteCandidates: voteCandidates.map(p => ({ id: p.id, name: p.name, seq: p.seq }))
+  });
+}
+
+// 处理投票结果
+function processVotes(room) {
+  const alive = getAlivePlayers(room);
+  const voteCounts = {};
+  const voteDetails = {};
+
+  alive.forEach(p => {
+    const target = room.votes[p.id];
+    voteDetails[p.id] = {
+      voterSeq: p.seq,
+      voterName: p.name,
+      targetId: target,
+      targetName: target && room.players[target] ? room.players[target].name : null,
+      targetSeq: target && room.players[target] ? room.players[target].seq : null
+    };
+    if (target) {
+      voteCounts[target] = (voteCounts[target] || 0) + 1;
+    }
+  });
+
+  const maxVotes = Math.max(0, ...Object.values(voteCounts));
+  const topPlayers = Object.keys(voteCounts).filter(id => voteCounts[id] === maxVotes);
+
+  if (topPlayers.length === 1 && maxVotes > 0) {
+    // 唯一最高票，淘汰该玩家
+    const eliminatedId = topPlayers[0];
+    const eliminatedPlayer = room.players[eliminatedId];
+    eliminatedPlayer.alive = false;
+    room.eliminated.push(eliminatedId);
+    room.lastEliminatedSocketId = eliminatedId;
+    room.lastPeaceNight = false;
+
+    // 广播投票结果
+    broadcast(room, {
+      type: 'vote_result',
+      round: room.round,
+      voteDetails: Object.values(voteDetails),
+      eliminatedId,
+      eliminatedName: eliminatedPlayer.name,
+      eliminatedSeq: eliminatedPlayer.seq,
+      eliminatedRole: eliminatedPlayer.role,
+      isTie: false
+    });
+
+    // 通知被淘汰玩家
+    sendTo(eliminatedPlayer.ws, {
+      type: 'eliminated',
+      name: eliminatedPlayer.name,
+      role: eliminatedPlayer.role,
+      word: eliminatedPlayer.role === 'A' ? room.wordA :
+            eliminatedPlayer.role === 'B' ? room.wordB : `（${room.wordLength}字）`
+    });
+
+    // 检查游戏结束
+    const gameOver = checkGameOver(room);
+    if (gameOver.over) {
+      handleGameOver(room, gameOver.winner);
+    } else {
+      room.phase = 'started';
+    }
+
+  } else if (topPlayers.length > 1 && room.tieRound === 0) {
+    // 第一次平票，进入加时描述
+    room.tieRound = 1;
+    room.tieSocketIds = topPlayers;
+    // 描述顺序：只有平票的人
+    room.describeOrder = topPlayers.filter(id => room.players[id] && room.players[id].alive);
+    room.describeIndex = 0;
+    room.descriptions = []; // 清空本轮描述（加时独立）
+
+    broadcast(room, {
+      type: 'tie_vote',
+      round: room.round,
+      tiePlayerIds: topPlayers,
+      tiePlayerNames: topPlayers.map(id => room.players[id]?.name),
+      tiePlayerSeqs: topPlayers.map(id => room.players[id]?.seq),
+      voteDetails: Object.values(voteDetails)
+    });
+
+    room.phase = 'describing';
+    // 通知第一个平票玩家描述
+    notifyNextDescribe(room);
+
+  } else if (topPlayers.length > 1 && room.tieRound === 1) {
+    // 第二次还是平票 → 平安夜
+    room.lastPeaceNight = true;
+    room.lastEliminatedSocketId = null;
+    room.tieSocketIds = [];
+    room.tieRound = 0;
+
+    broadcast(room, {
+      type: 'peace_night',
+      round: room.round,
+      voteDetails: Object.values(voteDetails)
+    });
+
+    // 检查游戏结束（平安夜也需要检查）
+    const gameOver = checkGameOver(room);
+    if (gameOver.over) {
+      handleGameOver(room, gameOver.winner);
+    } else {
+      room.phase = 'started';
+    }
+
+  } else {
+    // 所有人都弃票 → 平安夜
+    room.lastPeaceNight = true;
+    room.lastEliminatedSocketId = null;
+    room.tieRound = 0;
+
+    broadcast(room, {
+      type: 'peace_night',
+      round: room.round,
+      voteDetails: Object.values(voteDetails),
+      reason: 'all_abstain'
+    });
+
+    const gameOver = checkGameOver(room);
+    if (gameOver.over) {
+      handleGameOver(room, gameOver.winner);
+    } else {
+      room.phase = 'started';
+    }
+  }
+}
+
+// 处理游戏结束
+function handleGameOver(room, winner) {
+  const alive = getAlivePlayers(room);
+  const allPlayers = Object.values(room.players);
+
+  if (winner === 'undercover') {
+    room.phase = 'ended';
+    // 卧底胜：直接公布结果，无需结算
+    broadcast(room, {
+      type: 'game_over_undercover_wins',
+      wordA: room.wordA,
+      wordB: room.wordB,
+      winner: 'undercover',
+      playerDetails: allPlayers.map(p => ({
+        id: p.id, name: p.name, seq: p.seq, role: p.role, alive: p.alive
+      }))
+    });
+  } else {
+    // 平民胜：进入结算
+    room.phase = 'settlement';
+    room.submissions = {};
+    broadcast(room, {
+      type: 'game_ended_civilian_wins',
+      message: '所有卧底已淘汰！进入结算环节'
+    });
+    broadcast(room, { type: 'settlement_started' });
+    // 通知法官进入结算
+    if (room.judge) {
+      sendTo(room.judge.ws, {
+        type: 'settlement_started',
+        alivePlayers: alive.map(p => ({ id: p.id, name: p.name, seq: p.seq, role: p.role }))
+      });
+    }
+  }
+}
 
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

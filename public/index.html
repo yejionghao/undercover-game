@@ -15,181 +15,184 @@ body {
   justify-content: center;
   padding: 16px;
 }
-#app {
-  width: 100%;
-  max-width: 480px;
-}
-h1 {
-  text-align: center;
-  color: #f0a500;
-  font-size: 28px;
-  margin: 24px 0 8px;
-  letter-spacing: 2px;
-}
-.subtitle {
-  text-align: center;
-  color: #888;
-  font-size: 13px;
-  margin-bottom: 32px;
-}
-.card {
-  background: #16213e;
-  border-radius: 16px;
-  padding: 24px;
-  margin-bottom: 16px;
-  border: 1px solid #0f3460;
-}
-.card h2 {
-  color: #f0a500;
-  font-size: 18px;
-  margin-bottom: 16px;
-}
+#app { width: 100%; max-width: 480px; }
+h1 { text-align: center; color: #f0a500; font-size: 28px; margin: 24px 0 8px; letter-spacing: 2px; }
+.subtitle { text-align: center; color: #888; font-size: 13px; margin-bottom: 24px; }
+.card { background: #16213e; border-radius: 16px; padding: 20px; margin-bottom: 16px; border: 1px solid #0f3460; }
+.card h2 { color: #f0a500; font-size: 18px; margin-bottom: 14px; }
 input[type=text], input[type=number] {
-  width: 100%;
-  background: #0f3460;
-  border: 1px solid #1a4a8a;
-  border-radius: 10px;
-  padding: 14px 16px;
-  color: #fff;
-  font-size: 16px;
-  margin-bottom: 12px;
-  outline: none;
+  width: 100%; background: #0f3460; border: 1px solid #1a4a8a;
+  border-radius: 10px; padding: 14px 16px; color: #fff;
+  font-size: 16px; margin-bottom: 12px; outline: none;
 }
 input:focus { border-color: #f0a500; }
+textarea {
+  width: 100%; background: #0f3460; border: 1px solid #1a4a8a;
+  border-radius: 10px; padding: 12px 16px; color: #fff;
+  font-size: 15px; margin-bottom: 12px; outline: none;
+  resize: none; height: 80px;
+}
+textarea:focus { border-color: #f0a500; }
 button {
-  width: 100%;
-  padding: 16px;
-  border: none;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  margin-bottom: 10px;
+  width: 100%; padding: 14px; border: none; border-radius: 12px;
+  font-size: 16px; font-weight: bold; cursor: pointer; margin-bottom: 10px;
   transition: opacity 0.2s;
 }
 button:active { opacity: 0.8; }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
 .btn-primary { background: #f0a500; color: #1a1a2e; }
 .btn-secondary { background: #0f3460; color: #f0a500; border: 1px solid #f0a500; }
 .btn-danger { background: #c0392b; color: #fff; }
 .btn-success { background: #27ae60; color: #fff; }
 .btn-small { padding: 10px; font-size: 14px; margin-bottom: 8px; }
 .tag {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: bold;
+  display: inline-block; padding: 3px 10px; border-radius: 20px;
+  font-size: 12px; font-weight: bold;
 }
 .tag-A { background: #1a4a8a; color: #74b9ff; }
 .tag-B { background: #1a5c3a; color: #55efc4; }
 .tag-U { background: #5c1a1a; color: #ff7675; }
 .tag-judge { background: #5c4a00; color: #f0a500; }
-.identity-box {
-  border-radius: 16px;
-  padding: 24px;
-  text-align: center;
-  margin-bottom: 16px;
-}
+.identity-box { border-radius: 16px; padding: 24px; text-align: center; margin-bottom: 16px; }
 .identity-A { background: linear-gradient(135deg, #1a4a8a, #0f3460); border: 2px solid #74b9ff; }
 .identity-B { background: linear-gradient(135deg, #1a5c3a, #0f3460); border: 2px solid #55efc4; }
 .identity-U { background: linear-gradient(135deg, #5c1a1a, #2c0f0f); border: 2px solid #ff7675; }
 .identity-label { font-size: 14px; opacity: 0.7; margin-bottom: 8px; }
-.identity-main { font-size: 48px; font-weight: bold; margin: 12px 0; }
+.identity-main { font-size: 40px; font-weight: bold; margin: 12px 0; }
 .identity-A .identity-main { color: #74b9ff; }
 .identity-B .identity-main { color: #55efc4; }
 .identity-U .identity-main { color: #ff7675; }
 .identity-sub { font-size: 14px; opacity: 0.8; }
 .player-list { list-style: none; }
 .player-list li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 0;
-  border-bottom: 1px solid #0f3460;
-  font-size: 15px;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 0; border-bottom: 1px solid #0f3460; font-size: 15px;
 }
 .player-list li:last-child { border-bottom: none; }
 .ready-badge { color: #27ae60; font-size: 13px; }
 .not-ready-badge { color: #888; font-size: 13px; }
 .link-box {
-  background: #0f3460;
-  border-radius: 10px;
-  padding: 12px 16px;
-  word-break: break-all;
-  font-size: 13px;
-  color: #74b9ff;
-  margin-bottom: 12px;
-  cursor: pointer;
+  background: #0f3460; border-radius: 10px; padding: 12px 16px;
+  word-break: break-all; font-size: 13px; color: #74b9ff;
+  margin-bottom: 12px; cursor: pointer;
 }
 .hint { font-size: 13px; color: #888; margin-bottom: 12px; text-align: center; }
 .radio-group { display: flex; gap: 10px; margin-bottom: 12px; }
 .radio-btn {
-  flex: 1;
-  padding: 12px;
-  border: 2px solid #0f3460;
-  border-radius: 10px;
-  text-align: center;
-  cursor: pointer;
-  font-size: 14px;
-  background: #0f3460;
-  color: #888;
-  transition: all 0.2s;
-  width: auto;
-  margin: 0;
+  flex: 1; padding: 12px; border: 2px solid #0f3460; border-radius: 10px;
+  text-align: center; cursor: pointer; font-size: 14px;
+  background: #0f3460; color: #888; transition: all 0.2s; width: auto; margin: 0;
 }
 .radio-btn.active { border-color: #f0a500; color: #f0a500; background: #1a1a2e; }
 .undercover-list { list-style: none; }
 .undercover-list li {
-  padding: 8px 12px;
-  background: #5c1a1a;
-  border-radius: 8px;
-  margin-bottom: 6px;
-  color: #ff7675;
-  font-size: 15px;
+  padding: 8px 12px; background: #5c1a1a; border-radius: 8px;
+  margin-bottom: 6px; color: #ff7675; font-size: 15px;
 }
-.submission-item {
-  background: #0f3460;
-  border-radius: 10px;
-  padding: 12px;
-  margin-bottom: 8px;
-}
+.submission-item { background: #0f3460; border-radius: 10px; padding: 12px; margin-bottom: 8px; }
 .submission-item .s-name { font-weight: bold; color: #f0a500; margin-bottom: 4px; }
 .submission-item .s-detail { font-size: 13px; color: #aaa; line-height: 1.6; }
-.result-box {
-  background: #0f3460;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 12px;
-}
+.result-box { background: #0f3460; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
 .result-box h3 { color: #f0a500; margin-bottom: 8px; font-size: 15px; }
 .result-box p { font-size: 14px; color: #ccc; line-height: 1.8; }
 .word-reveal { font-size: 22px; font-weight: bold; margin: 8px 0; }
 .word-A { color: #74b9ff; }
 .word-B { color: #55efc4; }
 .hidden { display: none !important; }
-.status-bar {
-  text-align: center;
-  font-size: 13px;
-  color: #888;
-  padding: 8px;
-  margin-bottom: 16px;
-}
+.status-bar { text-align: center; font-size: 13px; color: #888; padding: 8px; margin-bottom: 12px; }
 .conn-ok { color: #27ae60; }
 .conn-err { color: #c0392b; }
-textarea {
-  width: 100%;
-  background: #0f3460;
-  border: 1px solid #1a4a8a;
-  border-radius: 10px;
-  padding: 12px 16px;
-  color: #fff;
-  font-size: 15px;
-  margin-bottom: 12px;
-  outline: none;
-  resize: none;
-  height: 80px;
+
+/* 描述记录 */
+.desc-list { list-style: none; max-height: 280px; overflow-y: auto; }
+.desc-item {
+  padding: 10px 12px; border-left: 3px solid #f0a500;
+  margin-bottom: 8px; background: #0f3460; border-radius: 0 8px 8px 0;
 }
-textarea:focus { border-color: #f0a500; }
+.desc-item .desc-header { font-size: 12px; color: #888; margin-bottom: 4px; }
+.desc-item .desc-text { font-size: 15px; color: #e0e0e0; }
+.desc-item.current-turn { border-left-color: #00c896; }
+
+/* 倒计时 */
+.countdown-box {
+  text-align: center; padding: 24px; background: #0f3460; border-radius: 12px; margin-bottom: 16px;
+}
+.countdown-num { font-size: 56px; font-weight: bold; color: #f0a500; line-height: 1; }
+.countdown-label { font-size: 14px; color: #888; margin-top: 8px; }
+
+/* 投票 */
+.vote-option {
+  display: flex; align-items: center; padding: 12px 14px;
+  border: 2px solid #0f3460; border-radius: 10px; margin-bottom: 8px;
+  cursor: pointer; transition: all 0.2s; background: #0f3460;
+}
+.vote-option:hover { border-color: #f0a500; }
+.vote-option.selected { border-color: #f0a500; background: #1a1a2e; }
+.vote-option .seq-badge {
+  width: 28px; height: 28px; border-radius: 50%; background: #1a4a8a;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: bold; color: #74b9ff; margin-right: 12px; flex-shrink: 0;
+}
+.vote-option .player-name { flex: 1; font-size: 15px; }
+.vote-option.abstain-option .seq-badge { background: #333; color: #888; }
+
+/* 玩家序号徽章 */
+.seq-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; border-radius: 50%; background: #1a4a8a;
+  color: #74b9ff; font-size: 12px; font-weight: bold; margin-right: 8px;
+}
+
+/* 等待动画 */
+.waiting-dots::after {
+  content: '...';
+  animation: dots 1.5s infinite;
+}
+@keyframes dots {
+  0%, 33% { content: '.'; }
+  34%, 66% { content: '..'; }
+  67%, 100% { content: '...'; }
+}
+
+/* 法官玩家详情表 */
+.judge-player-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.judge-player-table th {
+  color: #888; font-size: 12px; padding: 8px 6px; text-align: left;
+  border-bottom: 1px solid #0f3460;
+}
+.judge-player-table td { padding: 10px 6px; border-bottom: 1px solid #0f3460; }
+.judge-player-table tr:last-child td { border-bottom: none; }
+.alive-row { color: #e0e0e0; }
+.dead-row { color: #666; text-decoration: line-through; }
+.current-turn-row { background: rgba(240, 165, 0, 0.08); }
+
+/* 投票详情 */
+.vote-detail-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0; border-bottom: 1px solid #0f3460; font-size: 14px;
+}
+.vote-detail-item:last-child { border-bottom: none; }
+
+/* 轮次标识 */
+.round-badge {
+  display: inline-block; padding: 4px 12px; border-radius: 20px;
+  background: #5c4a00; color: #f0a500; font-size: 13px; font-weight: bold;
+}
+
+/* 结束横幅 */
+.game-over-banner {
+  text-align: center; padding: 28px; border-radius: 16px; margin-bottom: 16px;
+}
+.game-over-banner.undercover-wins {
+  background: linear-gradient(135deg, #5c1a1a, #2c0f0f); border: 2px solid #ff7675;
+}
+.game-over-banner.civilian-wins {
+  background: linear-gradient(135deg, #1a4a1a, #0f2c0f); border: 2px solid #55efc4;
+}
+.game-over-icon { font-size: 56px; margin-bottom: 12px; }
+.game-over-title { font-size: 26px; font-weight: bold; margin-bottom: 8px; }
+.undercover-wins .game-over-title { color: #ff7675; }
+.civilian-wins .game-over-title { color: #55efc4; }
 </style>
 </head>
 <body>
@@ -198,7 +201,7 @@ textarea:focus { border-color: #f0a500; }
   <p class="subtitle">Who is the undercover?</p>
   <div class="status-bar"><span id="connStatus">⏳ 连接中...</span></div>
 
-  <!-- 入口页 -->
+  <!-- ===== 入口页 ===== -->
   <div id="pageEntry" class="card">
     <h2>👋 进入游戏</h2>
     <input type="text" id="entryName" placeholder="输入你的名字" maxlength="10">
@@ -209,7 +212,7 @@ textarea:focus { border-color: #f0a500; }
     <button class="btn-secondary" onclick="joinRoom()">🎮 加入游戏</button>
   </div>
 
-  <!-- 法官等待室 -->
+  <!-- ===== 法官等待室 ===== -->
   <div id="pageJudgeWaiting" class="hidden">
     <div class="card">
       <h2>⚖️ 法官控制台</h2>
@@ -225,7 +228,7 @@ textarea:focus { border-color: #f0a500; }
     </div>
   </div>
 
-  <!-- 玩家等待室 -->
+  <!-- ===== 玩家等待室 ===== -->
   <div id="pagePlayerWaiting" class="hidden">
     <div class="card">
       <h2>🎮 等待开始</h2>
@@ -236,7 +239,7 @@ textarea:focus { border-color: #f0a500; }
     </div>
   </div>
 
-  <!-- 法官下发词语 -->
+  <!-- ===== 法官下发词语 ===== -->
   <div id="pageJudgeWord" class="hidden">
     <div class="card">
       <h2>📝 下发词语</h2>
@@ -252,29 +255,92 @@ textarea:focus { border-color: #f0a500; }
       </div>
       <button class="btn-primary" onclick="distributeWords()">📤 下发词语</button>
     </div>
+    <!-- 词语已下发：法官控制台 -->
     <div class="card hidden" id="judgeWordInfo">
       <h2>✅ 词语已下发</h2>
-      <p style="margin-bottom:8px;font-size:14px;color:#aaa;">本轮词语：</p>
-      <p class="word-reveal word-A" id="infoWordA"></p>
-      <p class="word-reveal word-B" id="infoWordB"></p>
-      <p style="font-size:13px;color:#888;margin-top:8px;">卧底只知道字数，不知道具体词语</p>
-      <button class="btn-danger" style="margin-top:16px" onclick="startSettlement()">🏁 进入结算</button>
+      <div style="margin-bottom:12px">
+        <span class="word-A" style="font-size:20px;font-weight:bold" id="infoWordA"></span>
+        <span style="color:#888;margin:0 8px">vs</span>
+        <span class="word-B" style="font-size:20px;font-weight:bold" id="infoWordB"></span>
+      </div>
+      <p style="font-size:12px;color:#888;margin-bottom:16px">卧底只知道字数，不知道具体词语</p>
+      <!-- 法官玩家详情表 -->
+      <div style="overflow-x:auto">
+        <table class="judge-player-table" id="judgePlayerDetails">
+          <thead><tr><th>#</th><th>名字</th><th>身份</th><th>词语</th><th>状态</th></tr></thead>
+          <tbody id="judgePlayerDetailsBody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:16px">
+        <button class="btn-primary" id="btnStartDescRound" onclick="startDescRound()">▶️ 开始本轮描述</button>
+        <button class="btn-success hidden" id="btnEndDescRound" onclick="endDescRound()">✅ 本轮描述结束</button>
+        <button class="btn-danger hidden" id="btnNextRound" onclick="nextRound()">⏭️ 开始下一轮</button>
+      </div>
     </div>
   </div>
 
-  <!-- 玩家身份页 -->
+  <!-- ===== 玩家身份页 ===== -->
   <div id="pagePlayerIdentity" class="hidden">
     <div id="identityBox"></div>
     <div id="undercoverSection" class="hidden card">
       <h2>🕵️ 你的同伴</h2>
       <ul class="undercover-list" id="undercoverList"></ul>
     </div>
-    <div class="card">
-      <p class="hint">线下开始发言，等待法官进入结算...</p>
+    <!-- 描述区域（轮到自己时显示） -->
+    <div id="describeInputCard" class="card hidden">
+      <h2>✍️ 轮到你发言了！</h2>
+      <p class="hint" id="describeHint">用一句话描述你的词，不要直说</p>
+      <textarea id="describeInput" placeholder="输入你的描述..." maxlength="100"></textarea>
+      <button class="btn-primary" onclick="submitDescription()">📤 提交描述</button>
+    </div>
+    <!-- 等待描述 -->
+    <div id="describeWaitCard" class="card hidden">
+      <h2>⏳ 等待发言</h2>
+      <p class="hint" id="describeWaitHint">等待其他人发言<span class="waiting-dots"></span></p>
+    </div>
+    <!-- 描述记录 -->
+    <div id="describeLogCard" class="card hidden">
+      <h2>📋 本轮描述记录</h2>
+      <ul class="desc-list" id="describeLog"></ul>
+    </div>
+    <!-- 讨论倒计时 -->
+    <div id="discussionCard" class="card hidden">
+      <h2>💬 讨论时间</h2>
+      <div class="countdown-box">
+        <div class="countdown-num" id="countdownNum">5:00</div>
+        <div class="countdown-label">讨论结束后自动进入投票</div>
+      </div>
+      <p class="hint">根据大家的描述，讨论谁是卧底</p>
+    </div>
+    <!-- 投票 -->
+    <div id="voteCard" class="card hidden">
+      <h2 id="voteTitle">🗳️ 投票</h2>
+      <p class="hint" id="voteHint">选择你认为是卧底的玩家</p>
+      <div id="voteOptions"></div>
+      <button class="btn-danger" onclick="submitVote()">✅ 确定投票</button>
+    </div>
+    <!-- 等待投票结果 -->
+    <div id="voteWaitCard" class="card hidden">
+      <div style="text-align:center;padding:24px">
+        <div style="font-size:40px;margin-bottom:12px">⏳</div>
+        <h2 style="color:#f0a500;margin-bottom:8px">已投票</h2>
+        <p class="hint">等待其他人投票<span class="waiting-dots"></span></p>
+      </div>
+    </div>
+    <!-- 被淘汰 -->
+    <div id="eliminatedCard" class="card hidden">
+      <div style="text-align:center;padding:24px">
+        <div style="font-size:40px;margin-bottom:12px">💀</div>
+        <h2 style="color:#ff7675;margin-bottom:8px">你已被淘汰</h2>
+        <p id="eliminatedInfo" style="font-size:14px;color:#888"></p>
+        <button class="btn-secondary" style="margin-top:16px" onclick="location.reload()">🔄 回到首页</button>
+      </div>
     </div>
   </div>
 
-  <!-- 玩家结算提交 -->
+  <!-- ===== 讨论/投票结果（法官视图也用此区域通过 describeLog 展示） ===== -->
+
+  <!-- ===== 玩家结算提交 ===== -->
   <div id="pagePlayerSettlement" class="hidden">
     <div class="card">
       <h2>🗳️ 提交猜测</h2>
@@ -291,7 +357,7 @@ textarea:focus { border-color: #f0a500; }
     </div>
   </div>
 
-  <!-- 玩家等待结果 -->
+  <!-- ===== 玩家等待结果 ===== -->
   <div id="pagePlayerWaitResult" class="hidden">
     <div class="card" style="text-align:center;padding:40px 24px;">
       <div style="font-size:48px;margin-bottom:16px;">⏳</div>
@@ -300,7 +366,7 @@ textarea:focus { border-color: #f0a500; }
     </div>
   </div>
 
-  <!-- 法官结算页 -->
+  <!-- ===== 法官结算页 ===== -->
   <div id="pageJudgeSettlement" class="hidden">
     <div class="card">
       <h2>📊 玩家提交情况</h2>
@@ -310,10 +376,10 @@ textarea:focus { border-color: #f0a500; }
     </div>
   </div>
 
-  <!-- 游戏结束页 -->
+  <!-- ===== 游戏结束页 ===== -->
   <div id="pageEnded" class="hidden">
-    <div class="card" style="text-align:center">
-      <div id="winnerBanner" style="font-size:28px;font-weight:bold;margin-bottom:8px;"></div>
+    <div id="gameOverBanner"></div>
+    <div class="card" id="endWordCard" style="text-align:center">
       <p class="hint">本轮词语揭晓</p>
       <div class="result-box">
         <h3>🔵 平民A组的词：</h3>
@@ -324,7 +390,7 @@ textarea:focus { border-color: #f0a500; }
         <p class="word-reveal word-B" id="endWordB"></p>
       </div>
     </div>
-    <div class="card">
+    <div class="card" id="endSubmissionsCard" style="display:none">
       <h2>📋 所有人的猜测</h2>
       <div id="endSubmissions"></div>
     </div>
@@ -340,18 +406,33 @@ const WS_URL = location.protocol === 'https:'
 let ws;
 let myRole = null;
 let myName = '';
+let mySeq = 0;
+let mySocketId = ''; // 从服务端分配，通过 player_seq 广播
 let roomId = '';
 let isJudge = false;
 let wordMode = 'auto';
+
+// 游戏状态
+let gamePhase = 'waiting';  // waiting|started|describing|discussing|voting|settlement|ended
+let alivePlayerMap = {};    // id -> {id, name, seq}
+let playerSeqMap = {};      // id -> seq
+let selectedVoteTarget = undefined; // undefined=未选, null=弃票, string=socketId
+let countdownTimer = null;
+let currentDescribingId = null;
+let roundDescriptions = [];  // [{seq,name,text}]
+let isTieVote = false;
+let judgePlayerDetails = []; // 法官用
 
 function getUrlParam(key) {
   return new URLSearchParams(location.search).get(key);
 }
 
 function showPage(id) {
-  const pages = ['pageEntry','pageJudgeWaiting','pagePlayerWaiting',
+  const pages = [
+    'pageEntry','pageJudgeWaiting','pagePlayerWaiting',
     'pageJudgeWord','pagePlayerIdentity','pagePlayerSettlement',
-    'pagePlayerWaitResult','pageJudgeSettlement','pageEnded'];
+    'pagePlayerWaitResult','pageJudgeSettlement','pageEnded'
+  ];
   pages.forEach(p => document.getElementById(p).classList.add('hidden'));
   document.getElementById(id).classList.remove('hidden');
 }
@@ -377,10 +458,11 @@ function connectWS(onOpen) {
 
 function handleMessage(msg) {
   switch(msg.type) {
+
+    // ===== 原有消息 =====
     case 'judge_confirmed':
       roomId = msg.roomId;
-      const gameUrl = `${location.origin}?room=${roomId}`;
-      document.getElementById('shareLink').textContent = gameUrl;
+      document.getElementById('shareLink').textContent = `${location.origin}?room=${roomId}`;
       showPage('pageJudgeWaiting');
       break;
 
@@ -395,11 +477,23 @@ function handleMessage(msg) {
 
     case 'game_started':
       myRole = msg.role;
+      if (msg.seq) mySeq = msg.seq;
       if (isJudge) {
+        judgePlayerDetails = msg.playerDetails || [];
         showPage('pageJudgeWord');
+        renderJudgePlayerDetails();
       } else {
         showIdentity(msg);
+        showPage('pagePlayerIdentity');
       }
+      break;
+
+    case 'player_seq':
+      // 建立 id -> seq 映射
+      msg.players.forEach(p => {
+        playerSeqMap[p.id] = p.seq;
+        alivePlayerMap[p.id] = { id: p.id, name: p.name, seq: p.seq };
+      });
       break;
 
     case 'word_pair_result':
@@ -413,8 +507,8 @@ function handleMessage(msg) {
 
     case 'words_distributed':
       document.getElementById('judgeWordInfo').classList.remove('hidden');
-      document.getElementById('infoWordA').textContent = `平民A：${msg.wordA}`;
-      document.getElementById('infoWordB').textContent = `平民B：${msg.wordB}`;
+      document.getElementById('infoWordA').textContent = `A：${msg.wordA}`;
+      document.getElementById('infoWordB').textContent = `B：${msg.wordB}`;
       break;
 
     case 'settlement_started':
@@ -436,139 +530,453 @@ function handleMessage(msg) {
     case 'error':
       alert(msg.message);
       break;
+
+    // ===== 新增消息 =====
+
+    case 'start_description_round': {
+      gamePhase = 'describing';
+      roundDescriptions = [];
+      currentDescribingId = msg.startPlayerSocketId;
+      showDescribeLog([]);
+      if (!isJudge) {
+        showEl('describeLogCard', true);
+        showEl('describeInputCard', false);
+        showEl('describeWaitCard', true);
+        showEl('discussionCard', false);
+        showEl('voteCard', false);
+        showEl('voteWaitCard', false);
+        document.getElementById('describeWaitHint').textContent = `第 ${msg.round} 轮开始，等待 #${msg.startPlayerSeq} ${msg.startPlayerName} 发言`;
+      }
+      if (isJudge) {
+        updateJudgeBtn('describing');
+      }
+      break;
+    }
+
+    case 'your_turn_describe': {
+      gamePhase = 'describing';
+      showEl('describeInputCard', true);
+      showEl('describeWaitCard', false);
+      document.getElementById('describeHint').textContent =
+        `第 ${msg.round} 轮 · 第 ${msg.descIndex + 1}/${msg.descTotal} 个发言`;
+      document.getElementById('describeInput').value = '';
+      document.getElementById('describeInput').focus();
+      break;
+    }
+
+    case 'turn_to_describe': {
+      currentDescribingId = msg.socketId;
+      if (!isJudge) {
+        if (msg.socketId !== getMySocketId()) {
+          showEl('describeWaitCard', true);
+          showEl('describeInputCard', false);
+          document.getElementById('describeWaitHint').textContent =
+            `等待 #${msg.seq} ${msg.name} 发言（${msg.index+1}/${msg.total}）`;
+        }
+      } else {
+        // 法官：高亮当前发言者
+        renderJudgePlayerDetails(msg.socketId);
+      }
+      break;
+    }
+
+    case 'description_update': {
+      const record = { seq: msg.seq, name: msg.name, text: msg.text };
+      roundDescriptions.push(record);
+      showDescribeLog(roundDescriptions);
+      break;
+    }
+
+    case 'all_described': {
+      // 只有法官收到，显示「本轮描述结束」按钮
+      showEl('btnEndDescRound', true);
+      showEl('btnStartDescRound', false);
+      break;
+    }
+
+    case 'discussion_started': {
+      gamePhase = 'discussing';
+      if (!isJudge) {
+        showEl('discussionCard', true);
+        showEl('describeInputCard', false);
+        showEl('describeWaitCard', false);
+        showEl('voteCard', false);
+        showEl('voteWaitCard', false);
+        startCountdown(msg.countdown || 300, () => {
+          // 倒计时结束，自动进入投票（前端发起）
+          send({ type: 'vote_started_manual' });
+        });
+      }
+      if (isJudge) {
+        updateJudgeBtn('discussing');
+      }
+      break;
+    }
+
+    case 'vote_started': {
+      gamePhase = 'voting';
+      isTieVote = msg.isTie || false;
+      if (!isJudge) {
+        stopCountdown();
+        showEl('discussionCard', false);
+        showEl('voteCard', true);
+        showEl('voteWaitCard', false);
+        renderVoteOptions(msg.alivePlayers, msg.voteCandidates, msg.isTie);
+      }
+      if (isJudge) {
+        updateJudgeBtn('voting');
+      }
+      break;
+    }
+
+    case 'vote_received': {
+      if (!isJudge) {
+        showEl('voteCard', false);
+        showEl('voteWaitCard', true);
+      }
+      break;
+    }
+
+    case 'vote_result': {
+      if (!isJudge) {
+        showEl('voteWaitCard', false);
+        showVoteResult(msg);
+      }
+      if (isJudge) {
+        showJudgeVoteResult(msg);
+        if (!msg.isTie) {
+          // 淘汰后更新法官玩家表
+          if (msg.eliminatedId && alivePlayerMap[msg.eliminatedId]) {
+            delete alivePlayerMap[msg.eliminatedId];
+          }
+          judgePlayerDetails.forEach(p => {
+            if (p.id === msg.eliminatedId) p.alive = false;
+          });
+          renderJudgePlayerDetails();
+          updateJudgeBtn('result');
+        }
+      }
+      break;
+    }
+
+    case 'eliminated': {
+      showEl('describeInputCard', false);
+      showEl('describeWaitCard', false);
+      showEl('discussionCard', false);
+      showEl('voteCard', false);
+      showEl('voteWaitCard', false);
+      showEl('eliminatedCard', true);
+      let roleLabel = msg.role === 'A' ? '平民A组' : msg.role === 'B' ? '平民B组' : '卧底';
+      document.getElementById('eliminatedInfo').textContent =
+        `你的身份是 ${roleLabel}，词语是「${msg.word}」`;
+      break;
+    }
+
+    case 'tie_vote': {
+      if (!isJudge) {
+        stopCountdown();
+        showEl('discussionCard', false);
+        showEl('voteCard', false);
+        showEl('voteWaitCard', false);
+        // 显示平票提示
+        const tieNames = msg.tiePlayerNames.join('、');
+        showNotice(`⚖️ 平票！${tieNames} 进行加时发言`);
+        showEl('describeWaitCard', true);
+        document.getElementById('describeWaitHint').textContent = `平票加时！等待 ${tieNames} 补充描述`;
+      }
+      if (isJudge) {
+        updateJudgeBtn('tie');
+      }
+      break;
+    }
+
+    case 'peace_night': {
+      if (!isJudge) {
+        stopCountdown();
+        showEl('voteCard', false);
+        showEl('voteWaitCard', false);
+        showEl('discussionCard', false);
+        showNotice('🕊️ 平安夜！本轮无人淘汰，进入下一轮');
+        showEl('describeWaitCard', true);
+        document.getElementById('describeWaitHint').textContent = '平安夜，等待法官开始下一轮...';
+      }
+      if (isJudge) {
+        updateJudgeBtn('peace_night');
+      }
+      break;
+    }
+
+    case 'game_over_undercover_wins': {
+      showGameOver('undercover', msg);
+      break;
+    }
+
+    case 'game_ended_civilian_wins': {
+      // 收到这条后 settlement_started 也会来
+      break;
+    }
+
+    case 'round_ready': {
+      // 法官可以开始下一轮
+      if (isJudge) {
+        updateJudgeBtn('ready');
+      } else {
+        showEl('describeWaitCard', true);
+        document.getElementById('describeWaitHint').textContent = `等待法官开始第 ${msg.round} 轮...`;
+      }
+      break;
+    }
   }
 }
 
-function updateRoomState(msg) {
-  if (isJudge) {
-    const list = document.getElementById('judgePlayerList');
-    list.innerHTML = msg.players.map(p =>
-      `<li><span>${p.name}</span><span class="${p.ready ? 'ready-badge' : 'not-ready-badge'}">${p.ready ? '✅ 已准备' : '⏳ 未准备'}</span></li>`
-    ).join('');
-    document.getElementById('playerCountBadge').textContent = `(${msg.players.length}人)`;
-    const allReady = msg.players.length >= 7 && msg.players.every(p => p.ready);
-    const btn = document.getElementById('btnStartGame');
-    btn.disabled = !allReady;
-    if (msg.players.length < 7) {
-      document.getElementById('waitingHint').textContent = `还需要 ${7 - msg.players.length} 人加入（最少7人）`;
-    } else if (!allReady) {
-      document.getElementById('waitingHint').textContent = '等待所有人准备...';
+// ===== 辅助函数 =====
+
+function getMySocketId() {
+  return mySocketId;
+}
+
+function showEl(id, show) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (show) el.classList.remove('hidden');
+  else el.classList.add('hidden');
+}
+
+function showNotice(text) {
+  // 简单 toast
+  const div = document.createElement('div');
+  div.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#f0a500;color:#1a1a2e;padding:12px 24px;border-radius:24px;font-weight:bold;font-size:14px;z-index:9999;max-width:90%;text-align:center';
+  div.textContent = text;
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 4000);
+}
+
+function showDescribeLog(records) {
+  const el = document.getElementById('describeLog');
+  if (!el) return;
+  el.innerHTML = records.map(r =>
+    `<li class="desc-item">
+      <div class="desc-header">#${r.seq} ${r.name}</div>
+      <div class="desc-text">${escHtml(r.text)}</div>
+    </li>`
+  ).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function startCountdown(seconds, onEnd) {
+  stopCountdown();
+  let rem = seconds;
+  const el = document.getElementById('countdownNum');
+  const tick = () => {
+    if (!el) return;
+    const m = Math.floor(rem / 60), s = rem % 60;
+    el.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+    if (rem <= 0) {
+      stopCountdown();
+      if (onEnd) onEnd();
     } else {
-      document.getElementById('waitingHint').textContent = '所有人已准备，可以开始！';
+      rem--;
+      countdownTimer = setTimeout(tick, 1000);
     }
-  } else {
-    const list = document.getElementById('playerRoomList');
-    if (list) {
-      list.innerHTML = msg.players.map(p =>
-        `<li><span>${p.name}</span><span class="${p.ready ? 'ready-badge' : 'not-ready-badge'}">${p.ready ? '✅ 已准备' : '⏳ 未准备'}</span></li>`
-      ).join('');
-    }
-  }
+  };
+  tick();
 }
 
-function showIdentity(msg) {
-  showPage('pagePlayerIdentity');
-  const box = document.getElementById('identityBox');
-  if (msg.role === 'A') {
-    box.innerHTML = `
-      <div class="identity-box identity-A">
-        <div class="identity-label">你的身份</div>
-        <div class="identity-main">👥 平民</div>
-        <div class="identity-sub">你是 <strong style="color:#74b9ff">A组平民</strong>，词语稍后下发</div>
-      </div>`;
-  } else if (msg.role === 'B') {
-    box.innerHTML = `
-      <div class="identity-box identity-B">
-        <div class="identity-label">你的身份</div>
-        <div class="identity-main">👥 平民</div>
-        <div class="identity-sub">你是 <strong style="color:#55efc4">B组平民</strong>，词语稍后下发</div>
-      </div>`;
-  } else {
-    box.innerHTML = `
-      <div class="identity-box identity-U">
-        <div class="identity-label">你的身份</div>
-        <div class="identity-main">🕵️ 卧底</div>
-        <div class="identity-sub">你的任务：伪装成平民，猜出词语</div>
-      </div>`;
-    const sec = document.getElementById('undercoverSection');
-    sec.classList.remove('hidden');
-    document.getElementById('undercoverList').innerHTML =
-      msg.undercoverList.map(n => `<li>🕵️ ${n}</li>`).join('');
-  }
+function stopCountdown() {
+  if (countdownTimer) { clearTimeout(countdownTimer); countdownTimer = null; }
 }
 
-function showWordOnIdentity(msg) {
-  const box = document.getElementById('identityBox');
-  if (msg.role === 'A') {
-    box.innerHTML = `
-      <div class="identity-box identity-A">
-        <div class="identity-label">你的词语（A组平民）</div>
-        <div class="identity-main" style="font-size:36px">${msg.word}</div>
-        <div class="identity-sub">记住这个词，不要直说</div>
-      </div>`;
-  } else if (msg.role === 'B') {
-    box.innerHTML = `
-      <div class="identity-box identity-B">
-        <div class="identity-label">你的词语（B组平民）</div>
-        <div class="identity-main" style="font-size:36px">${msg.word}</div>
-        <div class="identity-sub">记住这个词，不要直说</div>
-      </div>`;
-  } else {
-    box.innerHTML = `
-      <div class="identity-box identity-U">
-        <div class="identity-label">🕵️ 卧底</div>
-        <div class="identity-main" style="font-size:36px">${msg.wordLength}</div>
-        <div class="identity-sub">平民的词是 <strong>${msg.wordLength} 个字</strong>，你来猜！</div>
-      </div>`;
-  }
+function renderVoteOptions(alivePlayers, voteCandidates, isTie) {
+  selectedVoteTarget = undefined;
+  const container = document.getElementById('voteOptions');
+  document.getElementById('voteTitle').textContent = isTie ? '⚖️ 加时投票' : '🗳️ 投票';
+  document.getElementById('voteHint').textContent = isTie
+    ? '再次投票（只能投平票的人）'
+    : '选择你认为是卧底的玩家，或放弃投票';
+
+  const candidates = isTie ? voteCandidates : alivePlayers;
+  let html = candidates.map(p => `
+    <div class="vote-option" data-id="${p.id}" onclick="selectVoteOption('${p.id}')">
+      <div class="seq-badge">#${p.seq}</div>
+      <div class="player-name">${escHtml(p.name)}</div>
+    </div>`
+  ).join('');
+  html += `<div class="vote-option abstain-option" data-id="null" onclick="selectVoteOption(null)">
+    <div class="seq-badge">✗</div>
+    <div class="player-name">放弃投票</div>
+  </div>`;
+  container.innerHTML = html;
 }
 
-function updateSubmissions(msg) {
-  if (!isJudge) return;
-  showPage('pageJudgeSettlement');
-  document.getElementById('submissionCount').textContent =
-    `已提交：${msg.submissions.length} / ${msg.total} 人`;
-  document.getElementById('submissionList').innerHTML = msg.submissions.map(s => `
-    <div class="submission-item">
-      <div class="s-name">${s.name} <span class="tag tag-${s.role === 'undercover' ? 'U' : s.role}">${s.role === 'undercover' ? '卧底' : s.role === 'A' ? 'A组' : 'B组'}</span></div>
-      <div class="s-detail">
-        第一组：${s.groupA_names} → 词：${s.groupA_word}<br>
-        第二组：${s.groupB_names} → 词：${s.groupB_word}
-      </div>
-    </div>`).join('');
+function selectVoteOption(targetId) {
+  selectedVoteTarget = targetId;
+  document.querySelectorAll('.vote-option').forEach(el => {
+    const id = el.dataset.id;
+    el.classList.toggle('selected',
+      (targetId === null && id === 'null') || (targetId !== null && id === targetId));
+  });
 }
 
-function showEnded(msg) {
-  showPage('pageEnded');
-  document.getElementById('endWordA').textContent = msg.wordA;
-  document.getElementById('endWordB').textContent = msg.wordB;
-
-  // 胜负横幅
-  const banner = document.getElementById('winnerBanner');
-  if (msg.winner === 'undercover') {
-    banner.textContent = '🕵️ 卧底胜利！';
-    banner.style.color = '#e94560';
-  } else {
-    banner.textContent = '🎉 平民胜利！';
-    banner.style.color = '#00c896';
+function submitVote() {
+  if (selectedVoteTarget === undefined) {
+    showNotice('请先选择投票对象或放弃投票');
+    return;
   }
+  send({ type: 'submit_vote', target: selectedVoteTarget });
+  showEl('voteCard', false);
+  showEl('voteWaitCard', true);
+}
 
-  // 提交列表
-  document.getElementById('endSubmissions').innerHTML = msg.submissions.map(s => {
-    const roleLabel = s.role === 'undercover' ? '🕵️卧底' : s.role === 'A' ? '🔵平民A' : '🟢平民B';
-    const correctTag = s.correct
-      ? '<span style="color:#00c896;font-weight:bold;">✅ 猜对</span>'
-      : '<span style="color:#e94560;font-weight:bold;">❌ 猜错</span>';
-    return `
-    <div class="submission-item">
-      <div class="s-name">${s.name} <span style="font-size:12px;color:#888;">${roleLabel}</span> ${correctTag}</div>
-      <div class="s-detail">
-        第一组：${s.groupA_names} → <b>${s.groupA_word}</b><br>
-        第二组：${s.groupB_names} → <b>${s.groupB_word}</b>
-      </div>
+function showVoteResult(msg) {
+  // 在描述记录区域后追加投票结果
+  const logCard = document.getElementById('describeLogCard');
+  showEl('describeLogCard', true);
+
+  const resultDiv = document.createElement('div');
+  resultDiv.className = 'card';
+  resultDiv.style.marginTop = '8px';
+
+  let html = '<h2>📊 投票结果</h2>';
+  if (msg.eliminatedId) {
+    const roleLabel = msg.eliminatedRole === 'undercover' ? '卧底' :
+                      msg.eliminatedRole === 'A' ? '平民A' : '平民B';
+    html += `<p style="margin-bottom:12px;color:#ff7675;font-weight:bold">
+      💀 #${msg.eliminatedSeq} ${escHtml(msg.eliminatedName)}（${roleLabel}）被淘汰
+    </p>`;
+  }
+  html += '<div>';
+  msg.voteDetails.forEach(d => {
+    html += `<div class="vote-detail-item">
+      <span><span class="seq-num">${d.voterSeq}</span>${escHtml(d.voterName)}</span>
+      <span style="color:#f0a500">${d.targetId ? `→ #${d.targetSeq} ${escHtml(d.targetName)}` : '→ 弃票'}</span>
     </div>`;
+  });
+  html += '</div>';
+  resultDiv.innerHTML = html;
+
+  const identityPage = document.getElementById('pagePlayerIdentity');
+  identityPage.appendChild(resultDiv);
+
+  // 若被淘汰则 eliminated 消息会来，否则等待下一轮
+  if (!msg.eliminatedId) {
+    // 平安夜前的 tie
+  } else if (msg.eliminatedId !== mySocketId) {
+    showEl('describeWaitCard', true);
+    document.getElementById('describeWaitHint').textContent = '等待法官开始下一轮...';
+  }
+}
+
+function showGameOver(winner, msg) {
+  if (isJudge) {
+    showPage('pageEnded');
+  } else {
+    showPage('pageEnded');
+  }
+  const banner = document.getElementById('gameOverBanner');
+  if (winner === 'undercover') {
+    banner.innerHTML = `<div class="game-over-banner undercover-wins">
+      <div class="game-over-icon">🕵️</div>
+      <div class="game-over-title">卧底胜利！</div>
+    </div>`;
+  } else {
+    banner.innerHTML = `<div class="game-over-banner civilian-wins">
+      <div class="game-over-icon">🎉</div>
+      <div class="game-over-title">平民胜利！</div>
+    </div>`;
+  }
+  if (msg.wordA) document.getElementById('endWordA').textContent = msg.wordA;
+  if (msg.wordB) document.getElementById('endWordB').textContent = msg.wordB;
+  document.getElementById('endWordCard').style.display = '';
+}
+
+// ===== 法官相关 =====
+
+function renderJudgePlayerDetails(highlightId) {
+  if (!judgePlayerDetails.length) return;
+  const tbody = document.getElementById('judgePlayerDetailsBody');
+  if (!tbody) return;
+  tbody.innerHTML = judgePlayerDetails.map(p => {
+    const roleLabel = p.role === 'A' ? '<span class="tag tag-A">平民A</span>' :
+                      p.role === 'B' ? '<span class="tag tag-B">平民B</span>' :
+                      '<span class="tag tag-U">卧底</span>';
+    const rowClass = (p.id === highlightId) ? 'current-turn-row' : (p.alive === false ? 'dead-row' : 'alive-row');
+    // 获取词语
+    let word = '';
+    if (p.role === 'A') word = window._wordA || '—';
+    else if (p.role === 'B') word = window._wordB || '—';
+    else word = `(${window._wordLen || '?'}字)`;
+    return `<tr class="${rowClass}">
+      <td>#${p.seq}</td>
+      <td>${escHtml(p.name)}</td>
+      <td>${roleLabel}</td>
+      <td style="color:#f0a500">${word}</td>
+      <td>${p.alive === false ? '<span style="color:#666">已淘汰</span>' : '<span style="color:#27ae60">存活</span>'}</td>
+    </tr>`;
   }).join('');
 }
+
+function showJudgeVoteResult(msg) {
+  const infoCard = document.getElementById('judgeWordInfo');
+  const div = document.createElement('div');
+  div.className = 'card';
+  div.style.marginTop = '8px';
+  let html = '<h2>📊 投票结果</h2>';
+  if (msg.eliminatedId) {
+    html += `<p style="margin-bottom:12px;color:#ff7675;font-weight:bold">
+      💀 #${msg.eliminatedSeq} ${escHtml(msg.eliminatedName)} 被淘汰
+    </p>`;
+  }
+  html += '<div>';
+  msg.voteDetails.forEach(d => {
+    html += `<div class="vote-detail-item">
+      <span><span class="seq-num">${d.voterSeq}</span>${escHtml(d.voterName)}</span>
+      <span style="color:#f0a500">${d.targetId ? `→ #${d.targetSeq} ${escHtml(d.targetName)}` : '→ 弃票'}</span>
+    </div>`;
+  });
+  html += '</div>';
+  div.innerHTML = html;
+  infoCard.appendChild(div);
+}
+
+function updateJudgeBtn(phase) {
+  const btnStart = document.getElementById('btnStartDescRound');
+  const btnEnd = document.getElementById('btnEndDescRound');
+  const btnNext = document.getElementById('btnNextRound');
+  if (!btnStart) return;
+  switch(phase) {
+    case 'ready':
+    case 'started':
+      showEl('btnStartDescRound', true);
+      showEl('btnEndDescRound', false);
+      showEl('btnNextRound', false);
+      btnStart.disabled = false;
+      break;
+    case 'describing':
+      showEl('btnStartDescRound', false);
+      showEl('btnEndDescRound', false);
+      showEl('btnNextRound', false);
+      break;
+    case 'discussing':
+    case 'voting':
+    case 'tie':
+      showEl('btnStartDescRound', false);
+      showEl('btnEndDescRound', false);
+      showEl('btnNextRound', false);
+      break;
+    case 'result':
+    case 'peace_night':
+      showEl('btnStartDescRound', false);
+      showEl('btnEndDescRound', false);
+      showEl('btnNextRound', true);
+      break;
+  }
+}
+
+// ===== 入口操作 =====
 
 function claimJudge() {
   myName = document.getElementById('entryName').value.trim();
@@ -619,7 +1027,9 @@ function distributeWords() {
       const wA = document.getElementById('manualWordA').value;
       const wB = document.getElementById('manualWordB').value;
       if (wA && wB) {
+        window._wordA = wA; window._wordB = wB; window._wordLen = len;
         send({ type: 'distribute_words', wordA: wA, wordB: wB, wordLength: len });
+        renderJudgePlayerDetails();
       } else {
         alert('系统暂无该字数词对，请手动填写');
         selectMode('manual');
@@ -630,8 +1040,25 @@ function distributeWords() {
     const wB = document.getElementById('manualWordB').value.trim();
     if (!wA || !wB) { alert('请填写两个词语'); return; }
     if (wA.length !== wB.length) { alert('两个词语字数必须相同'); return; }
+    window._wordA = wA; window._wordB = wB; window._wordLen = wA.length;
     send({ type: 'distribute_words', wordA: wA, wordB: wB, wordLength: wA.length });
+    renderJudgePlayerDetails();
   }
+}
+
+function startDescRound() {
+  send({ type: 'start_description_round' });
+  updateJudgeBtn('describing');
+}
+
+function endDescRound() {
+  send({ type: 'end_description_round' });
+  updateJudgeBtn('discussing');
+}
+
+function nextRound() {
+  send({ type: 'next_round' });
+  updateJudgeBtn('started');
 }
 
 function startSettlement() {
@@ -645,10 +1072,7 @@ function submitResult() {
   const gAWord = document.getElementById('groupAWord').value.trim();
   const gBNames = document.getElementById('groupBNames').value.trim();
   const gBWord = document.getElementById('groupBWord').value.trim();
-  if (!gANames || !gAWord || !gBNames || !gBWord) {
-    alert('请填写完整信息');
-    return;
-  }
+  if (!gANames || !gAWord || !gBNames || !gBWord) { alert('请填写完整信息'); return; }
   send({ type: 'submit_result', groupA_names: gANames, groupA_word: gAWord, groupB_names: gBNames, groupB_word: gBWord });
 }
 
@@ -660,10 +1084,148 @@ function announceResult() {
 function copyLink() {
   const text = document.getElementById('shareLink').textContent;
   navigator.clipboard.writeText(text).then(() => {
-    alert('链接已复制！');
+    showNotice('链接已复制！');
   }).catch(() => {
     prompt('请手动复制以下链接：', text);
   });
+}
+
+// ===== 显示相关 =====
+
+function updateRoomState(msg) {
+  if (isJudge) {
+    const list = document.getElementById('judgePlayerList');
+    list.innerHTML = msg.players.map(p =>
+      `<li>
+        <span><span class="seq-num">${p.seq || '?'}</span>${escHtml(p.name)}</span>
+        <span class="${p.ready ? 'ready-badge' : 'not-ready-badge'}">${p.ready ? '✅ 已准备' : '⏳ 未准备'}</span>
+      </li>`
+    ).join('');
+    document.getElementById('playerCountBadge').textContent = `(${msg.players.length}人)`;
+    const allReady = msg.players.length >= 7 && msg.players.every(p => p.ready);
+    document.getElementById('btnStartGame').disabled = !allReady;
+    if (msg.players.length < 7) {
+      document.getElementById('waitingHint').textContent = `还需要 ${7 - msg.players.length} 人加入（最少7人）`;
+    } else if (!allReady) {
+      document.getElementById('waitingHint').textContent = '等待所有人准备...';
+    } else {
+      document.getElementById('waitingHint').textContent = '所有人已准备，可以开始！';
+    }
+  } else {
+    const list = document.getElementById('playerRoomList');
+    if (list) {
+      list.innerHTML = msg.players.map(p =>
+        `<li><span>${escHtml(p.name)}</span><span class="${p.ready ? 'ready-badge' : 'not-ready-badge'}">${p.ready ? '✅ 已准备' : '⏳ 未准备'}</span></li>`
+      ).join('');
+    }
+  }
+}
+
+function showIdentity(msg) {
+  const box = document.getElementById('identityBox');
+  if (msg.role === 'A') {
+    box.innerHTML = `<div class="identity-box identity-A">
+      <div class="identity-label">你的身份</div>
+      <div class="identity-main">👥 平民</div>
+      <div class="identity-sub">你是 <strong style="color:#74b9ff">A组平民</strong>，词语稍后下发</div>
+    </div>`;
+  } else if (msg.role === 'B') {
+    box.innerHTML = `<div class="identity-box identity-B">
+      <div class="identity-label">你的身份</div>
+      <div class="identity-main">👥 平民</div>
+      <div class="identity-sub">你是 <strong style="color:#55efc4">B组平民</strong>，词语稍后下发</div>
+    </div>`;
+  } else {
+    box.innerHTML = `<div class="identity-box identity-U">
+      <div class="identity-label">你的身份</div>
+      <div class="identity-main">🕵️ 卧底</div>
+      <div class="identity-sub">你的任务：伪装成平民，猜出词语</div>
+    </div>`;
+    const sec = document.getElementById('undercoverSection');
+    sec.classList.remove('hidden');
+    document.getElementById('undercoverList').innerHTML =
+      (msg.undercoverList || []).map(n => `<li>🕵️ ${escHtml(n)}</li>`).join('');
+  }
+}
+
+function showWordOnIdentity(msg) {
+  const box = document.getElementById('identityBox');
+  if (msg.role === 'A') {
+    box.innerHTML = `<div class="identity-box identity-A">
+      <div class="identity-label">你的词语（A组平民）</div>
+      <div class="identity-main" style="font-size:34px">${escHtml(msg.word)}</div>
+      <div class="identity-sub">记住这个词，不要直说</div>
+    </div>`;
+  } else if (msg.role === 'B') {
+    box.innerHTML = `<div class="identity-box identity-B">
+      <div class="identity-label">你的词语（B组平民）</div>
+      <div class="identity-main" style="font-size:34px">${escHtml(msg.word)}</div>
+      <div class="identity-sub">记住这个词，不要直说</div>
+    </div>`;
+  } else {
+    box.innerHTML = `<div class="identity-box identity-U">
+      <div class="identity-label">🕵️ 卧底</div>
+      <div class="identity-main" style="font-size:34px">${msg.wordLength}</div>
+      <div class="identity-sub">平民的词是 <strong>${msg.wordLength} 个字</strong>，你来猜！</div>
+    </div>`;
+  }
+}
+
+function updateSubmissions(msg) {
+  if (!isJudge) return;
+  showPage('pageJudgeSettlement');
+  document.getElementById('submissionCount').textContent =
+    `已提交：${msg.submissions.length} / ${msg.total} 人`;
+  document.getElementById('submissionList').innerHTML = msg.submissions.map(s => `
+    <div class="submission-item">
+      <div class="s-name">${escHtml(s.name)} <span class="tag tag-${s.role === 'undercover' ? 'U' : s.role}">${s.role === 'undercover' ? '卧底' : s.role === 'A' ? 'A组' : 'B组'}</span></div>
+      <div class="s-detail">
+        第一组：${escHtml(s.groupA_names)} → 词：${escHtml(s.groupA_word)}<br>
+        第二组：${escHtml(s.groupB_names)} → 词：${escHtml(s.groupB_word)}
+      </div>
+    </div>`).join('');
+}
+
+function showEnded(msg) {
+  showPage('pageEnded');
+  document.getElementById('endWordA').textContent = msg.wordA;
+  document.getElementById('endWordB').textContent = msg.wordB;
+  const banner = document.getElementById('gameOverBanner');
+  if (msg.winner === 'undercover') {
+    banner.innerHTML = `<div class="game-over-banner undercover-wins">
+      <div class="game-over-icon">🕵️</div>
+      <div class="game-over-title">卧底胜利！</div>
+    </div>`;
+  } else {
+    banner.innerHTML = `<div class="game-over-banner civilian-wins">
+      <div class="game-over-icon">🎉</div>
+      <div class="game-over-title">平民胜利！</div>
+    </div>`;
+  }
+  const subsCard = document.getElementById('endSubmissionsCard');
+  subsCard.style.display = '';
+  document.getElementById('endSubmissions').innerHTML = msg.submissions.map(s => {
+    const roleLabel = s.role === 'undercover' ? '🕵️卧底' : s.role === 'A' ? '🔵平民A' : '🟢平民B';
+    const correctTag = s.correct
+      ? '<span style="color:#00c896;font-weight:bold;">✅ 猜对</span>'
+      : '<span style="color:#e94560;font-weight:bold;">❌ 猜错</span>';
+    return `<div class="submission-item">
+      <div class="s-name">${escHtml(s.name)} <span style="font-size:12px;color:#888;">${roleLabel}</span> ${correctTag}</div>
+      <div class="s-detail">
+        第一组：${escHtml(s.groupA_names)} → <b>${escHtml(s.groupA_word)}</b><br>
+        第二组：${escHtml(s.groupB_names)} → <b>${escHtml(s.groupB_word)}</b>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function submitDescription() {
+  const text = document.getElementById('describeInput').value.trim();
+  if (!text) { showNotice('请输入描述内容'); return; }
+  send({ type: 'submit_description', text });
+  showEl('describeInputCard', false);
+  showEl('describeWaitCard', true);
+  document.getElementById('describeWaitHint').textContent = '等待其他人发言';
 }
 
 window.onload = () => {
