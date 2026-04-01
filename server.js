@@ -611,7 +611,12 @@ wss.on('connection', (ws) => {
           });
         }
 
-        // 检查是否所有存活玩家都投票了
+        // 检查是否所有存活玩家都投票了（断线玩家视为弃票）
+        alive.forEach(p => {
+          if (p.disconnected && room.votes[p.id] === undefined) {
+            room.votes[p.id] = null; // 断线自动弃票
+          }
+        });
         const allVoted = alive.every(p => room.votes[p.id] !== undefined);
         if (allVoted) {
           processVotes(room);
