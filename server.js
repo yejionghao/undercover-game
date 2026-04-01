@@ -259,18 +259,22 @@ wss.on('connection', (ws) => {
         const undercoverSubs = subs.filter(s => s.role === 'undercover');
         const civilianSubs = subs.filter(s => s.role !== 'undercover');
 
-        const allUndercoverCorrect = undercoverSubs.length > 0 && undercoverSubs.some(correct);
-        const allCivilianCorrect = civilianSubs.length > 0 && civilianSubs.every(correct);
+        // 卧底任意一人猜对 → 卧底胜
+        const anyUndercoverCorrect = undercoverSubs.length > 0 && undercoverSubs.some(correct);
+
+        // 平民 A组 和 B组 各自至少 1 人猜对 → 平民胜条件
+        const groupASubs = civilianSubs.filter(s => s.role === 'A');
+        const groupBSubs = civilianSubs.filter(s => s.role === 'B');
+        const civilianWin = groupASubs.some(correct) && groupBSubs.some(correct);
 
         let winner;
-        if (allUndercoverCorrect) {
-          // 卧底猜对，无论平民如何，卧底胜
+        if (anyUndercoverCorrect) {
           winner = 'undercover';
-        } else if (allCivilianCorrect) {
+        } else if (civilianWin) {
           winner = 'civilian';
         } else {
-          // 双方都没全对，平民胜（卧底未成功混淆）
-          winner = 'civilian';
+          // 卧底全猜错，但平民未满足条件，仍卧底胜
+          winner = 'undercover';
         }
 
         const result = {
