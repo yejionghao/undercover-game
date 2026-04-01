@@ -753,6 +753,7 @@ function handleMessage(msg) {
         startCountdown(msg.countdown || 300, null);
       }
       if (isJudge) {
+        showEl('btnEndDescRound', false); // 进入讨论阶段隐藏描述结束按钮
         updateJudgeBtn('discussing');
         // 显示法官倒计时面板
         showEl('judgeDiscussPanel', true);
@@ -774,6 +775,7 @@ function handleMessage(msg) {
       if (isJudge) {
         stopJudgeCountdown();
         showEl('judgeDiscussPanel', false);
+        showEl('btnEndDescRound', false); // 防止描述结束按钮残留
         updateJudgeBtn('voting');
         // 显示投票进度面板，初始化未投票列表
         showEl('judgeVoteProgressPanel', true);
