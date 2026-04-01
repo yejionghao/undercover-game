@@ -251,18 +251,41 @@ wss.on('connection', (ws) => {
         if (!currentRoom || !isJudge) return;
         const room = currentRoom;
         room.phase = 'ended';
-        broadcast(room, {
+
+        const subs = Object.values(room.submissions);
+        const correct = (s) => s.groupA_word === room.wordA && s.groupB_word === room.wordB;
+
+        // 卧底全部猜对 → 卧底胜；否则看平民是否全部猜对
+        const undercoverSubs = subs.filter(s => s.role === 'undercover');
+        const civilianSubs = subs.filter(s => s.role !== 'undercover');
+
+        const allUndercoverCorrect = undercoverSubs.length > 0 && undercoverSubs.every(correct);
+        const allCivilianCorrect = civilianSubs.length > 0 && civilianSubs.every(correct);
+
+        let winner;
+        if (allUndercoverCorrect) {
+          // 卧底猜对，无论平民如何，卧底胜
+          winner = 'undercover';
+        } else if (allCivilianCorrect) {
+          winner = 'civilian';
+        } else {
+          // 双方都没全对，平民胜（卧底未成功混淆）
+          winner = 'civilian';
+        }
+
+        const result = {
           type: 'game_ended',
           wordA: room.wordA,
           wordB: room.wordB,
-          submissions: Object.values(room.submissions)
-        });
-        sendTo(room.judge.ws, {
-          type: 'game_ended',
-          wordA: room.wordA,
-          wordB: room.wordB,
-          submissions: Object.values(room.submissions)
-        });
+          winner, // 'undercover' | 'civilian'
+          submissions: subs.map(s => ({
+            ...s,
+            correct: correct(s)
+          }))
+        };
+
+        broadcast(room, result);
+        sendTo(room.judge.ws, result);
         break;
       }
 

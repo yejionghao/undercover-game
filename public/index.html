@@ -313,7 +313,7 @@ textarea:focus { border-color: #f0a500; }
   <!-- 游戏结束页 -->
   <div id="pageEnded" class="hidden">
     <div class="card" style="text-align:center">
-      <h2 style="font-size:24px;margin-bottom:4px;">🎉 游戏结束</h2>
+      <div id="winnerBanner" style="font-size:28px;font-weight:bold;margin-bottom:8px;"></div>
       <p class="hint">本轮词语揭晓</p>
       <div class="result-box">
         <h3>🔵 平民A组的词：</h3>
@@ -542,14 +542,32 @@ function showEnded(msg) {
   showPage('pageEnded');
   document.getElementById('endWordA').textContent = msg.wordA;
   document.getElementById('endWordB').textContent = msg.wordB;
-  document.getElementById('endSubmissions').innerHTML = msg.submissions.map(s => `
+
+  // 胜负横幅
+  const banner = document.getElementById('winnerBanner');
+  if (msg.winner === 'undercover') {
+    banner.textContent = '🕵️ 卧底胜利！';
+    banner.style.color = '#e94560';
+  } else {
+    banner.textContent = '🎉 平民胜利！';
+    banner.style.color = '#00c896';
+  }
+
+  // 提交列表
+  document.getElementById('endSubmissions').innerHTML = msg.submissions.map(s => {
+    const roleLabel = s.role === 'undercover' ? '🕵️卧底' : s.role === 'A' ? '🔵平民A' : '🟢平民B';
+    const correctTag = s.correct
+      ? '<span style="color:#00c896;font-weight:bold;">✅ 猜对</span>'
+      : '<span style="color:#e94560;font-weight:bold;">❌ 猜错</span>';
+    return `
     <div class="submission-item">
-      <div class="s-name">${s.name}</div>
+      <div class="s-name">${s.name} <span style="font-size:12px;color:#888;">${roleLabel}</span> ${correctTag}</div>
       <div class="s-detail">
-        第一组：${s.groupA_names} → ${s.groupA_word}<br>
-        第二组：${s.groupB_names} → ${s.groupB_word}
+        第一组：${s.groupA_names} → <b>${s.groupA_word}</b><br>
+        第二组：${s.groupB_names} → <b>${s.groupB_word}</b>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function claimJudge() {
