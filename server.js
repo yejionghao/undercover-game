@@ -302,6 +302,16 @@ wss.on('connection', (ws) => {
           else if (p.role === 'undercover') sendTo(p.ws, { type: 'your_word', wordLength, role: 'undercover' });
         });
         sendTo(room.judge.ws, { type: 'words_distributed', wordA, wordB, wordLength });
+        // 词语分发后，推送含词语的完整玩家详情给法官
+        const joinOrder = Object.values(room.players).sort((a,b)=>a.seq-b.seq);
+        sendTo(room.judge.ws, {
+          type: 'player_info_list',
+          players: joinOrder.map(p => ({
+            id: p.id, name: p.name, seq: p.seq, role: p.role,
+            word: p.role === 'A' ? wordA : p.role === 'B' ? wordB : null,
+            wordLength
+          }))
+        });
         break;
       }
 
@@ -490,7 +500,7 @@ wss.on('connection', (ws) => {
         room.phase = 'discussing';
         broadcast(room, {
           type: 'discussion_started',
-          countdown: 300,
+          duration: 300,
           round: room.round,
           descriptions: room.descriptions
         });
@@ -509,6 +519,15 @@ wss.on('connection', (ws) => {
         // 法官手动触发投票（倒计时结束后前端也可自动触发）
         if (!currentRoom || !isJudge) return;
         startVoting(currentRoom);
+        break;
+      }
+
+      case 'skip_discussion': {
+        // 仅用于测试：立即跳过讨论倒计时，触发投票
+        if (!currentRoom || !isJudge) return;
+        const room = currentRoom;
+        if (room._discussionTimer) { clearTimeout(room._discussionTimer); room._discussionTimer = null; }
+        if (room.phase === 'discussing') startVoting(room);
         break;
       }
 
@@ -602,8 +621,8 @@ function startVoting(room, tiePlayerIds) {
     type: 'vote_started',
     round: room.round,
     isTie: !!tiePlayerIds,
-    alivePlayers: alive.map(p => ({ id: p.id, name: p.name, seq: p.seq })),
-    voteCandidates: voteCandidates.map(p => ({ id: p.id, name: p.name, seq: p.seq }))
+    players: alive.map(p => ({ id: p.id, name: p.name, seq: p.seq })),         // 所有存活玩家（用于投票名单显示）
+    voteCandidates: voteCandidates.map(p => ({ id: p.id, name: p.name, seq: p.seq })) // 本次可被投票的候选人
   });
 }
 

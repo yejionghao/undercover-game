@@ -506,10 +506,11 @@ function handleMessage(msg) {
       break;
 
     case 'player_seq':
-      // 建立 id -> seq 映射
+      // 建立 id -> seq 映射，并设置自己的序号
       msg.players.forEach(p => {
         playerSeqMap[p.id] = p.seq;
         alivePlayerMap[p.id] = { id: p.id, name: p.name, seq: p.seq };
+        if (p.id === mySocketId) mySeq = p.seq; // 设置自己的序号
       });
       break;
 
@@ -641,7 +642,7 @@ function handleMessage(msg) {
         showEl('discussionCard', false);
         showEl('voteCard', true);
         showEl('voteWaitCard', false);
-        renderVoteOptions(msg.alivePlayers, msg.voteCandidates, msg.isTie);
+        renderVoteOptions(msg.players, msg.voteCandidates, msg.isTie);
       }
       if (isJudge) {
         updateJudgeBtn('voting');
