@@ -768,7 +768,9 @@ function handleMessage(msg) {
     }
 
     case 'game_ended_civilian_wins': {
-      showGameOver('civilian', msg);
+      // 存下来，等 game_ended 结算完成后揭示
+      window._pendingGameOverMsg = msg;
+      // 不在这里跳页面，等 settlement_started 触发结算流程
       break;
     }
 
@@ -1351,19 +1353,39 @@ function showEnded(msg) {
   }
   const subsCard = document.getElementById('endSubmissionsCard');
   subsCard.style.display = '';
-  document.getElementById('endSubmissions').innerHTML = msg.submissions.map(s => {
-    const roleLabel = s.role === 'undercover' ? '🕵️卧底' : s.role === 'A' ? '🔵平民A' : '🟢平民B';
-    const correctTag = s.correct
-      ? '<span style="color:#00c896;font-weight:bold;">✅ 猜对</span>'
-      : '<span style="color:#e94560;font-weight:bold;">❌ 猜错</span>';
-    return `<div class="submission-item">
-      <div class="s-name">${escHtml(s.name)} <span style="font-size:12px;color:#888;">${roleLabel}</span> ${correctTag}</div>
-      <div class="s-detail">
-        第一组：${escHtml(s.groupA_names)} → <b>${escHtml(s.groupA_word)}</b><br>
-        第二组：${escHtml(s.groupB_names)} → <b>${escHtml(s.groupB_word)}</b>
-      </div>
-    </div>`;
-  }).join('');
+  let subsHtml = '';
+  // 猜词结果
+  if (msg.submissions && msg.submissions.length) {
+    subsHtml += `<div style="font-weight:bold;margin-bottom:8px;">📝 猜词结果</div>`;
+    subsHtml += msg.submissions.map(s => {
+      const roleLabel = s.role === 'undercover' ? '🕵️卧底' : s.role === 'A' ? '🔵平民A' : '🟢平民B';
+      const correctTag = s.correct
+        ? '<span style="color:#00c896;font-weight:bold;">✅ 猜对</span>'
+        : '<span style="color:#e94560;font-weight:bold;">❌ 猜错</span>';
+      return `<div class="submission-item">
+        <div class="s-name">${escHtml(s.name)} <span style="font-size:12px;color:#888;">${roleLabel}</span> ${correctTag}</div>
+        <div class="s-detail">
+          第一组：${escHtml(s.groupA_names)} → <b>${escHtml(s.groupA_word)}</b><br>
+          第二组：${escHtml(s.groupB_names)} → <b>${escHtml(s.groupB_word)}</b>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  // 全员身份揭示（从 game_ended_civilian_wins 存的 playerDetails）
+  const pending = window._pendingGameOverMsg;
+  const playerDetails = (pending && pending.playerDetails) || msg.playerDetails;
+  if (playerDetails && playerDetails.length) {
+    subsHtml += `<div style="font-weight:bold;margin:12px 0 8px;">👥 全员身份揭晓</div>`;
+    subsHtml += playerDetails.map(p => {
+      const roleLabel = p.role === 'undercover' ? '🕵️ 卧底' :
+                        p.role === 'A' ? '🔵 平民A' : '🟢 平民B';
+      const statusLabel = p.alive ? '' : ' <span style="color:#e94560">（已淘汰）</span>';
+      return `<div class="submission-item">
+        <div class="s-name">#${p.seq} ${escHtml(p.name)} &nbsp; ${roleLabel}${statusLabel}</div>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('endSubmissions').innerHTML = subsHtml;
 }
 
 function submitDescription() {
