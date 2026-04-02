@@ -669,12 +669,18 @@ wss.on('connection', (ws) => {
         room.describeIndex++;
         if (room.describeIndex >= room.describeOrder.length) {
           // 所有人描述完毕
-          if (room.judge) {
-            sendTo(room.judge.ws, {
-              type: 'all_described',
-              round: room.round,
-              descriptions: room.descriptions
-            });
+          if (room.isTieVote) {
+            // 加时描述结束 → 自动进入加时投票，不走讨论
+            setTimeout(() => startVoting(room, room.tieSocketIds), 1500);
+          } else {
+            // 正常描述结束 → 通知法官，等待法官操作
+            if (room.judge) {
+              sendTo(room.judge.ws, {
+                type: 'all_described',
+                round: room.round,
+                descriptions: room.descriptions
+              });
+            }
           }
         } else {
           notifyNextDescribe(room);
@@ -698,7 +704,11 @@ wss.on('connection', (ws) => {
         }
         room.describeIndex++;
         if (room.describeIndex >= room.describeOrder.length) {
-          if (room.judge) sendTo(room.judge.ws, { type: 'all_described', round: room.round, descriptions: room.descriptions });
+          if (room.isTieVote) {
+            setTimeout(() => startVoting(room, room.tieSocketIds), 1500);
+          } else {
+            if (room.judge) sendTo(room.judge.ws, { type: 'all_described', round: room.round, descriptions: room.descriptions });
+          }
         } else {
           notifyNextDescribe(room);
         }
