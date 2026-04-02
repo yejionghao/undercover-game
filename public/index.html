@@ -511,8 +511,12 @@ function send(msg) {
 }
 
 function connectWS(onOpen) {
+  // 清除旧的重连定时器
+  if (window._reconnectTimer) { clearTimeout(window._reconnectTimer); window._reconnectTimer = null; }
+
   ws = new WebSocket(WS_URL);
   ws.onopen = () => {
+    window._reconnectCount = 0; // 重连成功，计数归零
     document.getElementById('connStatus').innerHTML = '<span class="conn-ok">🟢 已连接</span>';
     // 每20秒发一次 ping 保活，防止 Railway 空闲断线
     if (window._heartbeatTimer) clearInterval(window._heartbeatTimer);
@@ -522,11 +526,43 @@ function connectWS(onOpen) {
     if (onOpen) onOpen();
   };
   ws.onerror = () => {
-    document.getElementById('connStatus').innerHTML = '<span class="conn-err">🔴 连接失败，请刷新</span>';
+    // onerror 后必然触发 onclose，交给 onclose 处理
   };
   ws.onclose = () => {
-    if (window._heartbeatTimer) clearInterval(window._heartbeatTimer);
-    document.getElementById('connStatus').innerHTML = '<span class="conn-err">🔴 连接断开，请刷新</span>';
+    if (window._heartbeatTimer) { clearInterval(window._heartbeatTimer); window._heartbeatTimer = null; }
+
+    // 游戏已结束或主动离开，不重连
+    if (window._noReconnect) return;
+
+    // 有重连凭据（token + roomId）才尝试自动重连
+    const savedToken = localStorage.getItem('ug_token');
+    const savedRoomId = localStorage.getItem('ug_roomId');
+    if (!savedToken || !savedRoomId) {
+      document.getElementById('connStatus').innerHTML = '<span class="conn-err">🔴 连接断开，请刷新</span>';
+      return;
+    }
+
+    window._reconnectCount = (window._reconnectCount || 0) + 1;
+    const maxRetries = 10;
+    if (window._reconnectCount > maxRetries) {
+      document.getElementById('connStatus').innerHTML = '<span class="conn-err">🔴 多次重连失败，请刷新页面</span>';
+      return;
+    }
+
+    const delay = Math.min(3000 * window._reconnectCount, 15000); // 3s, 6s, 9s ... 最长15s
+    document.getElementById('connStatus').innerHTML = `<span class="conn-err">🟡 连接断开，${Math.round(delay/1000)}秒后重连(${window._reconnectCount}/${maxRetries})...</span>`;
+
+    window._reconnectTimer = setTimeout(() => {
+      document.getElementById('connStatus').innerHTML = '<span class="conn-err">🟡 重连中...</span>';
+      const isJudgeLocal = localStorage.getItem('ug_isJudge') === '1';
+      const savedName = localStorage.getItem('ug_name') || '';
+      isJudge = isJudgeLocal;
+      myName = savedName;
+      roomId = savedRoomId;
+      connectWS(() => {
+        send({ type: 'rejoin', roomId: savedRoomId, token: savedToken });
+      });
+    }, delay);
   };
   ws.onmessage = (e) => handleMessage(JSON.parse(e.data));
 }
@@ -1130,7 +1166,8 @@ function showVoteResult(msg) {
 }
 
 function showGameOver(winner, msg) {
-  // 游戏结束，清除重连 token
+  // 游戏结束，不再自动重连
+  window._noReconnect = true;
   localStorage.removeItem('ug_token');
   localStorage.removeItem('ug_roomId');
   localStorage.removeItem('ug_isJudge');
@@ -1311,6 +1348,8 @@ function manualRejoin() {
 }
 
 function clearRejoin() {
+  window._noReconnect = true;
+  if (window._reconnectTimer) { clearTimeout(window._reconnectTimer); window._reconnectTimer = null; }
   localStorage.removeItem('ug_token');
   localStorage.removeItem('ug_roomId');
   localStorage.removeItem('ug_isJudge');

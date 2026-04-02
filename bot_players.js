@@ -18,7 +18,9 @@ const BASE_URL = 'wss://web-production-dba7f.up.railway.app';
 const PROXY = process.env.https_proxy || process.env.HTTPS_PROXY || 'http://127.0.0.1:8118';
 const agent = new HttpsProxyAgent(PROXY);
 
-const BOT_NAMES = ['阿猫', '阿狗', '小明', '小红', '老王', '阿强'];
+const BOT_NAMES = process.env.BOT_COUNT
+  ? ['阿猫', '阿狗', '小明', '小红', '老王', '阿强'].slice(0, parseInt(process.env.BOT_COUNT))
+  : ['阿猫', '阿狗', '小明', '小红', '老王', '阿强'];
 
 // 卧底发言库
 const UNDERCOVER_DESCS = [
