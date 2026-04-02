@@ -3,6 +3,7 @@ const { WebSocketServer } = require('ws');
 const { v4: uuidv4 } = require('uuid');
 const http = require('http');
 const path = require('path');
+const redisStore = require('./redis-store');
 
 const app = express();
 const server = http.createServer(app);
@@ -258,6 +259,7 @@ wss.on('connection', (ws) => {
         currentRoom = room;
         sendTo(ws, { type: 'joined', roomId: room.id, token: playerToken });
         broadcast(room, getRoomState(room));
+        redisStore.saveRoom(room.id, room); // 持久化：玩家加入
         break;
       }
 
@@ -441,6 +443,7 @@ wss.on('connection', (ws) => {
           type: 'player_seq',
           players: joinOrder.map(p => ({ id: p.id, name: p.name, seq: p.seq }))
         });
+        redisStore.saveRoom(room.id, room); // 持久化：游戏开始
         break;
       }
 
@@ -467,6 +470,7 @@ wss.on('connection', (ws) => {
             wordLength
           }))
         });
+        redisStore.saveRoom(room.id, room); // 持久化：词语分发
         break;
       }
 
@@ -630,6 +634,7 @@ wss.on('connection', (ws) => {
 
         // 通知第一个该描述的玩家
         notifyNextDescribe(room);
+        redisStore.saveRoom(room.id, room); // 持久化：本轮描述开始
         break;
       }
 
@@ -664,6 +669,7 @@ wss.on('connection', (ws) => {
           name: player.name,
           text: msg.text || ''
         });
+        redisStore.saveRoom(room.id, room); // 持久化：描述更新
 
         // 移到下一个
         room.describeIndex++;
@@ -837,9 +843,11 @@ wss.on('connection', (ws) => {
       // 游戏进行中（已分配 role）：只标记掉线，不删除，避免影响游戏流程
       if (currentRoom.players[socketId].role) {
         currentRoom.players[socketId].disconnected = true;
+        redisStore.saveRoom(currentRoom.id, currentRoom); // 持久化：玩家掉线状态
       } else {
         delete currentRoom.players[socketId];
         broadcast(currentRoom, getRoomState(currentRoom));
+        redisStore.saveRoom(currentRoom.id, currentRoom); // 持久化：玩家离开
       }
     }
   });
@@ -937,6 +945,7 @@ function processVotes(room) {
       eliminatedRole: eliminatedPlayer.role,
       isTie: false
     });
+    redisStore.saveRoom(room.id, room); // 持久化：投票结果 + 玩家淘汰
 
     // 通知被淘汰玩家
     sendTo(eliminatedPlayer.ws, {
@@ -1037,6 +1046,7 @@ function handleGameOver(room, winner) {
         id: p.id, name: p.name, seq: p.seq, role: p.role, alive: p.alive
       }))
     });
+    redisStore.deleteRoom(room.id); // 持久化：游戏结束（卧底胜），清除房间
   } else {
     // 平民胜：进入结算
     room.phase = 'settlement';
@@ -1063,9 +1073,40 @@ function handleGameOver(room, winner) {
         alivePlayers: allAlive.map(p => ({ id: p.id, name: p.name, seq: p.seq, role: p.role }))
       });
     }
+    redisStore.deleteRoom(room.id); // 持久化：游戏结束（平民胜），清除房间
   }
 }
 
-server.listen(PORT, () => {
+// ===== 启动时从 Redis 恢复房间状态 =====
+async function restoreRoomsFromRedis() {
+  if (!redisStore.isAvailable()) {
+    console.log('[Redis] 不可用，跳过房间恢复');
+    return;
+  }
+  const roomIds = await redisStore.loadAllRoomIds();
+  if (roomIds.length === 0) {
+    console.log('[Redis] 无历史房间需要恢复');
+    return;
+  }
+  let restored = 0;
+  for (const roomId of roomIds) {
+    const data = await redisStore.loadRoom(roomId);
+    if (!data) continue;
+    // 跳过已结束或空房间
+    if (data.phase === 'ended') {
+      await redisStore.deleteRoom(roomId);
+      continue;
+    }
+    // 恢复到内存，ws 字段均为 null，等玩家重连时重新绑定
+    rooms[roomId] = data;
+    restored++;
+    console.log(`[Redis] 恢复房间 ${roomId}（phase=${data.phase}，玩家数=${Object.keys(data.players || {}).length}）`);
+  }
+  console.log(`[Redis] 共恢复 ${restored} 个房间`);
+}
+
+server.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
+  // 等 Redis ready 后再恢复（给 ioredis 连接窗口）
+  setTimeout(restoreRoomsFromRedis, 1000);
 });
